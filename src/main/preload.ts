@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
-export type Channels = "ipc-example";
+import { Channels } from "../../types";
 
 contextBridge.exposeInMainWorld("electron", {
     ipcRenderer: {

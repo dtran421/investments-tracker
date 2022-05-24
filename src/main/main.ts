@@ -8,12 +8,15 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
-import path from "path";
+import { join } from "path";
 import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
+
+import { Channels } from "../../types";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
+import initializePortfolio from "./lib/initializePortfolio";
 
 export default class AppUpdater {
     constructor() {
@@ -25,11 +28,15 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on("ipc-example", async (event, arg) => {
+ipcMain.on(Channels.IPC_EXAMPLE, async (event, arg) => {
     const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
     console.log(msgTemplate(arg));
     event.reply("ipc-example", msgTemplate("pong"));
 });
+
+ipcMain.on(Channels.INITIALIZE_PORTFOLIO, (event, args) =>
+    initializePortfolio(event, args)
+);
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support");
@@ -62,11 +69,11 @@ const createWindow = async () => {
     }
 
     const RESOURCES_PATH = app.isPackaged
-        ? path.join(process.resourcesPath, "assets")
-        : path.join(__dirname, "../../assets");
+        ? join(process.resourcesPath, "assets")
+        : join(__dirname, "../../assets");
 
     const getAssetPath = (...paths: string[]): string => {
-        return path.join(RESOURCES_PATH, ...paths);
+        return join(RESOURCES_PATH, ...paths);
     };
 
     mainWindow = new BrowserWindow({
@@ -76,8 +83,8 @@ const createWindow = async () => {
         icon: getAssetPath("icon.png"),
         webPreferences: {
             preload: app.isPackaged
-                ? path.join(__dirname, "preload.js")
-                : path.join(__dirname, "../../.erb/dll/preload.js")
+                ? join(__dirname, "preload.js")
+                : join(__dirname, "../../.erb/dll/preload.js")
         }
     });
 

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AiOutlinePlus } from "react-icons/ai";
 
 import MainLayout from "renderer/components/layout/MainLayout";
+import { Channels } from "../../../types";
 
 type LinkProps = {
     text: string;
@@ -25,7 +26,9 @@ const Index = () => {
     const navigate = useNavigate();
 
     const createPortfolio = () => {
-        window.electron.ipcRenderer.sendMessage("ipc-example", ["ping"]);
+        window.electron.ipcRenderer.sendMessage(Channels.INITIALIZE_PORTFOLIO, [
+            "portfolio-1"
+        ]);
         navigate("/portfolio");
     };
 
