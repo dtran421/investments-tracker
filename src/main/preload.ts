@@ -2,22 +2,22 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
 import { Channels } from "../../types";
 
-contextBridge.exposeInMainWorld("electron", {
-    ipcRenderer: {
-        sendMessage(channel: Channels, args: unknown[]) {
-            ipcRenderer.send(channel, args);
-        },
-        on(channel: Channels, func: (...args: unknown[]) => void) {
-            const subscription = (
-                _event: IpcRendererEvent,
-                ...args: unknown[]
-            ) => func(...args);
-            ipcRenderer.on(channel, subscription);
+contextBridge.exposeInMainWorld("electronAPI", {
+    createPortfolio: (portfolioName: string) =>
+        ipcRenderer.send(Channels.INITIALIZE_PORTFOLIO, portfolioName),
+    onCreateReturn: (func: (str: string) => void) => {
+        const subscription = (_event: IpcRendererEvent, str: string) =>
+            func(str);
+        ipcRenderer.on(Channels.INITIALIZE_PORTFOLIO, subscription);
 
-            return () => ipcRenderer.removeListener(channel, subscription);
-        },
-        once(channel: Channels, func: (...args: unknown[]) => void) {
-            ipcRenderer.once(channel, (_event, ...args) => func(...args));
-        }
-    }
+        return () =>
+            ipcRenderer.removeListener(
+                Channels.INITIALIZE_PORTFOLIO,
+                subscription
+            );
+    },
+    // once(channel: Channels, func: (...args: unknown[]) => void) {
+    //     ipcRenderer.once(channel, (_event, ...args) => func(...args));
+    // }
+    fetchPortfolios: () => ipcRenderer.invoke(Channels.FETCH_PORTFOLIOS)
 });

@@ -1,16 +1,14 @@
-import Channels from "main/preload";
+import { IpcRenderer } from "electron";
+
+import { Portfolio } from "../../types";
 
 declare global {
     interface Window {
-        electron: {
-            ipcRenderer: {
-                sendMessage(channel: Channels, args: unknown[]): void;
-                on(
-                    channel: string,
-                    func: (...args: unknown[]) => void
-                ): (() => void) | undefined;
-                once(channel: string, func: (...args: unknown[]) => void): void;
-            };
+        electronAPI: {
+            createPortfolio: (portfolioName: string) => void;
+            onCreateReturn: (func: (str: string) => void) => () => IpcRenderer;
+            // once(channel: string, func: (...args: unknown[]) => void): void;
+            fetchPortfolios: () => Promise<Portfolio[]>;
         };
     }
 }

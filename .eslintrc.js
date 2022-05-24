@@ -6,6 +6,7 @@ module.exports = {
         "import/no-unresolved": "error",
         // Since React 17 and typescript 4.1 you can safely disable the rule
         "react/react-in-jsx-scope": "off",
+        "react/require-default-props": "off",
         "no-unused-vars": "warn",
         "prettier/prettier": [
             "warn",
@@ -14,7 +15,8 @@ module.exports = {
                 trailingComma: "none",
                 endOfLine: "auto"
             }
-        ]
+        ],
+        "no-console": ["warn", { allow: ["info", "warn", "error"] }]
     },
     parserOptions: {
         ecmaVersion: 2020,

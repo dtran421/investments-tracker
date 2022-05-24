@@ -16,7 +16,7 @@ import log from "electron-log";
 import { Channels } from "../../types";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
-import initializePortfolio from "./lib/initializePortfolio";
+import { fetchPortfolios, initializePortfolio } from "./lib/portfolio";
 
 export default class AppUpdater {
     constructor() {
@@ -28,15 +28,9 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on(Channels.IPC_EXAMPLE, async (event, arg) => {
-    const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-    console.log(msgTemplate(arg));
-    event.reply("ipc-example", msgTemplate("pong"));
-});
+ipcMain.on(Channels.INITIALIZE_PORTFOLIO, initializePortfolio);
 
-ipcMain.on(Channels.INITIALIZE_PORTFOLIO, (event, args) =>
-    initializePortfolio(event, args)
-);
+ipcMain.handle(Channels.FETCH_PORTFOLIOS, fetchPortfolios);
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support");

@@ -1,10 +1,10 @@
-import NavLayout from "../components/layout/NavLayout";
+import TabLayout from "renderer/components/layout/TabLayout";
 
 const Portfolio = () => {
     return (
-        <NavLayout>
+        <TabLayout>
             <p>test</p>
-        </NavLayout>
+        </TabLayout>
     );
 };
 

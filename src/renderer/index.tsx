@@ -1,7 +1,5 @@
 import { createRoot } from "react-dom/client";
 
-import { Channels } from "../../types";
-
 import App from "./App";
 
 const container = document.getElementById("root");
@@ -11,8 +9,8 @@ if (container) {
 }
 
 // calling IPC exposed from preload script
-window.electron.ipcRenderer.once(Channels.IPC_EXAMPLE, (arg) => {
+window.electronAPI.onCreateReturn((str: string) => {
     // eslint-disable-next-line no-console
-    console.log(arg);
+    console.log(str);
 });
-window.electron.ipcRenderer.sendMessage(Channels.IPC_EXAMPLE, ["ping"]);
+// window.electronAPI.ipcRenderer.sendMessage(Channels.IPC_EXAMPLE, ["ping"]);

@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlinePlus } from "react-icons/ai";
 
 import MainLayout from "renderer/components/layout/MainLayout";
-import { Channels } from "../../../types";
+
+import { Portfolio } from "../../../types";
 
 type LinkProps = {
     text: string;
@@ -25,16 +27,25 @@ const ActionLink = ({ text, handleClick }: LinkProps) => {
 const Index = () => {
     const navigate = useNavigate();
 
+    const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+    useEffect(() => {
+        const fetchPortfolios = async () => {
+            const newPortfolios = await window.electronAPI.fetchPortfolios();
+
+            setPortfolios(newPortfolios);
+        };
+
+        fetchPortfolios();
+    }, []);
+
     const createPortfolio = () => {
-        window.electron.ipcRenderer.sendMessage(Channels.INITIALIZE_PORTFOLIO, [
-            "portfolio-1"
-        ]);
+        window.electronAPI.createPortfolio("portfolio-1");
         navigate("/portfolio");
     };
 
     return (
-        <MainLayout>
-            <div className="w-full h-screen flex flex-col justify-center items-center bg-neutral-900 space-y-10">
+        <MainLayout showNav={portfolios.length !== 0}>
+            <div className="w-full flex flex-col justify-center items-center space-y-10">
                 <div className="space-y-3">
                     <h1 className="text-5xl text-center font-semibold">
                         Trackify
@@ -46,11 +57,11 @@ const Index = () => {
                 <div className="space-y-4">
                     <ActionLink
                         text="Track Portfolio"
-                        handleClick={() => createPortfolio()}
+                        handleClick={createPortfolio}
                     />
                     <ActionLink
                         text="Create Watchlist"
-                        handleClick={() => createPortfolio()}
+                        handleClick={createPortfolio}
                     />
                 </div>
             </div>
