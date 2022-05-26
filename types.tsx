@@ -1,15 +1,46 @@
+/**
+ * electronAPI types
+ */
 export enum Channels {
-    "IPC_EXAMPLE" = "ipc-example",
     "INITIALIZE_PORTFOLIO" = "initializePortfolio",
-    "FETCH_PORTFOLIOS" = "fetchPortfolios"
+    "FETCH_PORTFOLIOS" = "fetchPortfolios",
+    "FETCH_PORTFOLIO" = "fetchPortfolio",
+    "UPDATE_STOCK_ASSET" = "updateStockAsset"
 }
 
-export type Portfolio = {
+/**
+ * Database types
+ */
+export interface Asset {
+    symbol: string;
+    description: string;
+    sector?: string;
+    quantity: number;
+    costBasis: number;
+}
+
+export interface Portfolio {
     slug: string;
     name: string;
     order: number;
-};
+    assets: Asset[];
+}
 
-export type DBSchema = {
+export interface DBSchema {
     portfolios: Portfolio[];
-};
+}
+
+/**
+ * Frontend types
+ */
+export interface AssetData extends Asset {
+    price: number;
+    marketValue: number;
+    dollarGain: number;
+    percentGain: number;
+    allocation: number;
+}
+
+export interface PortfolioData extends Portfolio {
+    assets: AssetData[];
+}

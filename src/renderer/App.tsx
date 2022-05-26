@@ -10,7 +10,9 @@ export default function App() {
         <Router>
             <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="portfolio" element={<Portfolio />}>
+                    <Route path=":portfolioSlug" element={<Portfolio />} />
+                </Route>
             </Routes>
         </Router>
     );

@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlinePlus } from "react-icons/ai";
 
 import MainLayout from "renderer/components/layout/MainLayout";
+import Modal from "renderer/components/index/Modal";
 
-import { Portfolio } from "../../../types";
+import logo from "../../../assets/logo.png";
 
-type LinkProps = {
+interface LinkProps {
     text: string;
     handleClick: () => void;
-};
+}
 
 const ActionLink = ({ text, handleClick }: LinkProps) => {
     return (
@@ -27,43 +28,56 @@ const ActionLink = ({ text, handleClick }: LinkProps) => {
 const Index = () => {
     const navigate = useNavigate();
 
-    const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-    useEffect(() => {
-        const fetchPortfolios = async () => {
-            const newPortfolios = await window.electronAPI.fetchPortfolios();
+    const [showModal, toggleModal] = useState(false);
+    const [portfolioName, setPortfolioName] = useState("");
 
-            setPortfolios(newPortfolios);
-        };
+    const createPortfolio = async (ev: FormEvent) => {
+        ev.preventDefault();
 
-        fetchPortfolios();
-    }, []);
-
-    const createPortfolio = () => {
-        window.electronAPI.createPortfolio("portfolio-1");
-        navigate("/portfolio");
+        const portfolioSlug = await window.electronAPI.createPortfolio(
+            portfolioName
+        );
+        navigate(`/portfolio/${portfolioSlug}`);
     };
 
     return (
-        <MainLayout showNav={portfolios.length !== 0}>
-            <div className="w-full flex flex-col justify-center items-center space-y-10">
-                <div className="space-y-3">
-                    <h1 className="text-5xl text-center font-semibold">
-                        Trackify
-                    </h1>
-                    <h2 className="text-3xl font-medium text-gray-300/75">
-                        For the boldest of bulls
-                    </h2>
+        <MainLayout activePage="/">
+            <div className="relative w-full h-full">
+                <div className="w-full h-full flex flex-col justify-center items-center space-y-10">
+                    <div className="space-y-3">
+                        <div className="flex justify-center items-center space-x-2">
+                            <img alt="logo" src={logo} className="w-14 h-14" />
+                            <h1 className="text-5xl text-center font-semibold">
+                                Trackify
+                            </h1>
+                        </div>
+                        <h2 className="text-3xl font-medium text-gray-300/75">
+                            For the boldest of bulls
+                        </h2>
+                    </div>
+                    <div className="space-y-4">
+                        <ActionLink
+                            text="Track Portfolio"
+                            handleClick={() => toggleModal(true)}
+                        />
+                        <ActionLink
+                            text="Create Watchlist"
+                            handleClick={() => {
+                                return null;
+                            }}
+                        />
+                    </div>
                 </div>
-                <div className="space-y-4">
-                    <ActionLink
-                        text="Track Portfolio"
-                        handleClick={createPortfolio}
+                {showModal && (
+                    <Modal
+                        {...{
+                            toggleModal,
+                            portfolioName,
+                            setPortfolioName,
+                            createPortfolio
+                        }}
                     />
-                    <ActionLink
-                        text="Create Watchlist"
-                        handleClick={createPortfolio}
-                    />
-                </div>
+                )}
             </div>
         </MainLayout>
     );

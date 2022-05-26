@@ -16,7 +16,12 @@ import log from "electron-log";
 import { Channels } from "../../types";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
-import { fetchPortfolios, initializePortfolio } from "./lib/portfolio";
+import {
+    fetchPortfolio,
+    fetchPortfolios,
+    initializePortfolio,
+    updateStockAsset
+} from "./lib/portfolios";
 
 export default class AppUpdater {
     constructor() {
@@ -28,9 +33,13 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on(Channels.INITIALIZE_PORTFOLIO, initializePortfolio);
+ipcMain.handle(Channels.INITIALIZE_PORTFOLIO, initializePortfolio);
 
 ipcMain.handle(Channels.FETCH_PORTFOLIOS, fetchPortfolios);
+
+ipcMain.handle(Channels.FETCH_PORTFOLIO, fetchPortfolio);
+
+ipcMain.handle(Channels.UPDATE_STOCK_ASSET, updateStockAsset);
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support");
@@ -70,10 +79,11 @@ const createWindow = async () => {
         return join(RESOURCES_PATH, ...paths);
     };
 
+    // TODO: change this for production
     mainWindow = new BrowserWindow({
         show: false,
-        width: 1024,
-        height: 728,
+        width: 1366,
+        height: 768,
         icon: getAssetPath("icon.png"),
         webPreferences: {
             preload: app.isPackaged

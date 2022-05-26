@@ -8,9 +8,4 @@ if (container) {
     root.render(<App />);
 }
 
-// calling IPC exposed from preload script
-window.electronAPI.onCreateReturn((str: string) => {
-    // eslint-disable-next-line no-console
-    console.log(str);
-});
 // window.electronAPI.ipcRenderer.sendMessage(Channels.IPC_EXAMPLE, ["ping"]);
