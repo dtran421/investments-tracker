@@ -5,7 +5,8 @@ export enum Channels {
     "INITIALIZE_PORTFOLIO" = "initializePortfolio",
     "FETCH_PORTFOLIOS" = "fetchPortfolios",
     "FETCH_PORTFOLIO" = "fetchPortfolio",
-    "UPDATE_STOCK_ASSET" = "updateStockAsset"
+    "UPDATE_STOCK_ASSET" = "updateStockAsset",
+    "DELETE_STOCK_ASSET" = "deleteStockAsset"
 }
 
 /**

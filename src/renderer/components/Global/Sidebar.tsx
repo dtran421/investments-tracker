@@ -30,11 +30,7 @@ const PageButton = ({
         <div className="flex items-center space-x-3">
             <button
                 type="button"
-                className={`group ${
-                    isActive
-                        ? "bg-orange-500"
-                        : "bg-neutral-700/50 hover:bg-neutral-500/50"
-                } transition duration-100 ease-in rounded-full p-2`}
+                className="group bg-neutral-700/50 disabled:bg-orange-500 hover:bg-neutral-500/50 transition duration-100 ease-in rounded-full p-2"
                 onClick={() => goToPage(link)}
                 disabled={isActive}
             >
@@ -64,16 +60,12 @@ const Sidebar = ({ activePage, portfolios }: SidebarProps) => {
             <div
                 className={`${
                     isExpanded ? "w-40" : "w-min"
-                } xl:w-24 h-screen flex flex-col justify-between border-r border-neutral-700/40 space-y-3 px-2 py-4`}
+                } h-screen flex flex-col justify-between bg-neutral-800/70 border-r border-neutral-700/40 space-y-3 px-2 py-4`}
             >
                 <div className="flex flex-col items-center space-y-3">
                     <button
                         type="button"
-                        className={`${
-                            activePage === "/"
-                                ? "bg-orange-500"
-                                : "bg-neutral-600/50 hover:bg-orange-500"
-                        } transition duration-100 ease-in rounded-full p-2`}
+                        className="bg-neutral-600/50 disabled:bg-orange-500 hover:bg-orange-500 transition duration-100 ease-in rounded-full p-2"
                         onClick={() => goToPage("/")}
                         disabled={activePage === "/"}
                     >
@@ -88,10 +80,10 @@ const Sidebar = ({ activePage, portfolios }: SidebarProps) => {
                                     icon={
                                         <AiOutlineStock
                                             size={20}
-                                            className={`text-neutral-300 ${
+                                            className={`${
                                                 activePage === portfolioSlug
-                                                    ? "text-neutral-900"
-                                                    : "group-hover:text-orange-500"
+                                                    ? "text-white"
+                                                    : "text-neutral-300 group-hover:text-orange-500"
                                             }`}
                                         />
                                     }

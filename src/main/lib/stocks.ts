@@ -16,17 +16,20 @@ export const fetchStockQuotes = async (portfolio: Portfolio) => {
 
         const { assets } = portfolio;
         const stockTickers = _.map(
-            _.takeWhile(assets, ({ symbol }) => symbol !== "Cash"),
+            _.slice(assets, 0, assets.length - 1),
             ({ symbol }) => symbol
         );
 
+        let stockPrices: Record<string, number> = {};
         if (stockTickers.length) {
             const quotes = Object.fromEntries(
                 await alpaca.getLatestTrades(stockTickers)
             );
 
-            const stockPrices = _.mapValues(quotes, "Price");
+            stockPrices = _.mapValues(quotes, "Price");
+        }
 
+        if (Object.keys(stockPrices).length || assets.length === 1) {
             let assetData = _.map(assets, (asset) => {
                 const { symbol, quantity, costBasis } = asset;
 
@@ -41,14 +44,17 @@ export const fetchStockQuotes = async (portfolio: Portfolio) => {
                 }
 
                 const price = stockPrices[symbol];
-                const profitPerShare = costBasis === 0 ? 0 : price - costBasis;
+                const profitPerShare = costBasis ? price - costBasis : 0;
                 const marketValue = quantity * costBasis;
+                const percentGain = costBasis
+                    ? (profitPerShare / costBasis) * 100
+                    : 0;
                 return {
                     ...asset,
                     price,
                     marketValue,
                     dollarGain: profitPerShare * quantity,
-                    percentGain: (profitPerShare / costBasis) * 100
+                    percentGain
                 };
             });
 
@@ -58,7 +64,9 @@ export const fetchStockQuotes = async (portfolio: Portfolio) => {
 
             assetData = _.map(assetData, (asset) => ({
                 ...asset,
-                allocation: (asset.marketValue / totalPortfolioValue) * 100
+                allocation: totalPortfolioValue
+                    ? (asset.marketValue / totalPortfolioValue) * 100
+                    : 0
             }));
 
             portfolio.assets = assetData;

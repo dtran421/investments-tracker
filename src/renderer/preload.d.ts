@@ -13,6 +13,10 @@ declare global {
                 stockTicker: string,
                 updateField: { field: string; value: string | number } | null
             ) => Promise<PortfolioData>;
+            deleteStock: (
+                portfolioSlug: string,
+                stockTicker: string
+            ) => Promise<PortfolioData>;
         };
     }
 }

@@ -1,16 +1,24 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import TabLayout from "renderer/components/layout/TabLayout";
-import Table from "renderer/components/portfolio/Table";
+import TabLayout from "renderer/components/layouts/TabLayout";
 
 import { PortfolioData } from "../../../types";
-import Contexts from "../../../Contexts";
+import Calculator from "./calculator";
+import Composition from "./composition";
+import Holdings from "./holdings";
+
+const stockTabs = ["Holdings", "Composition", "Calculator"];
 
 const Portfolio = () => {
     const { portfolioSlug } = useParams();
 
-    const { PortfolioContext } = Contexts;
+    const [openTabs, setOpenTabs] = useState(stockTabs);
+    const [activeTab, setActiveTab] = useState(stockTabs[0]);
+
+    useEffect(() => {
+        setActiveTab(openTabs[openTabs.length - 1]);
+    }, [openTabs]);
 
     const [portfolio, setPortfolio] = useState<PortfolioData>({
         slug: "",
@@ -34,16 +42,13 @@ const Portfolio = () => {
         fetchPortfolio();
     }, [portfolioSlug]);
 
-    const { slug, name, assets } = portfolio as PortfolioData;
+    const { slug, name, assets } = portfolio;
 
     const updateAsset = useCallback(
         async (
-            ev: FormEvent,
             stockTicker: string,
             updateField: { field: string; value: string | number } | null
         ) => {
-            ev.preventDefault();
-
             const portfolioData = await window.electronAPI.updateStock(
                 slug,
                 stockTicker,
@@ -55,26 +60,62 @@ const Portfolio = () => {
         [slug]
     );
 
-    const portfolioContext = useMemo(
-        () => ({
-            updateAsset
-        }),
-        [updateAsset]
+    const deleteAsset = useCallback(
+        async (stockTicker: string) => {
+            const portfolioData = await window.electronAPI.deleteStock(
+                slug,
+                stockTicker
+            );
+
+            setPortfolio(portfolioData);
+        },
+        [slug]
     );
 
-    if (!portfolio) {
-        return null;
+    let tabPage;
+    switch (activeTab) {
+        case "Holdings":
+            tabPage = (
+                <Holdings
+                    {...{
+                        assets,
+                        updateAsset,
+                        deleteAsset
+                    }}
+                />
+            );
+            break;
+        case "Composition":
+            tabPage = <Composition {...{ assets }} />;
+            break;
+        case "Calculator":
+            tabPage = <Calculator {...{ assets }} />;
+            break;
+        default:
+            tabPage = null;
     }
-    return (
-        <TabLayout activePage={slug}>
-            <div className="space-y-6 px-8 py-4">
-                <p className="text-4xl font-semibold">{name}</p>
-                <PortfolioContext.Provider value={portfolioContext}>
-                    <Table assetData={assets} {...{ updateAsset }} />
-                </PortfolioContext.Provider>
+    return portfolio ? (
+        <TabLayout
+            activePage={slug}
+            tabs={stockTabs}
+            {...{
+                activeTab,
+                setActiveTab,
+                openTabs,
+                setOpenTabs
+            }}
+        >
+            <div className="space-y-6 p-8">
+                <div className="flex space-x-6">
+                    <p className="text-4xl font-semibold">{name}</p>
+                    <div className="flex items-center text-emerald-500 bg-emerald-800/60 rounded-lg px-4 py-1">
+                        <p>Stocks</p>
+                    </div>
+                </div>
+                <div className="overflow-y-auto">{tabPage}</div>
             </div>
         </TabLayout>
-    );
+    ) : null;
 };
 
 export default Portfolio;

@@ -31,5 +31,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
             portfolioSlug,
             stockTicker,
             updateField
-        ])
+        ]),
+    deleteStock: (portfolioSlug: string, stockTicker: string) =>
+        ipcRenderer.invoke(
+            Channels.DELETE_STOCK_ASSET,
+            portfolioSlug,
+            stockTicker
+        )
 });

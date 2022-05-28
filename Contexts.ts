@@ -1,13 +1,14 @@
-import { createContext, FormEvent } from "react";
+import { createContext } from "react";
 
 const PortfolioContext = createContext<{
     updateAsset: (
-        ev: FormEvent,
         stockTicker: string,
         updateField: { field: string; value: string | number } | null
     ) => void;
+    deleteAsset: (stockTicker: string) => void;
 }>({
-    updateAsset: () => new Promise(() => {})
+    updateAsset: () => new Promise(() => {}),
+    deleteAsset: () => new Promise(() => {})
 });
 
 export default {

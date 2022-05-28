@@ -17,6 +17,7 @@ import { Channels } from "../../types";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
 import {
+    deleteStockAsset,
     fetchPortfolio,
     fetchPortfolios,
     initializePortfolio,
@@ -40,6 +41,8 @@ ipcMain.handle(Channels.FETCH_PORTFOLIOS, fetchPortfolios);
 ipcMain.handle(Channels.FETCH_PORTFOLIO, fetchPortfolio);
 
 ipcMain.handle(Channels.UPDATE_STOCK_ASSET, updateStockAsset);
+
+ipcMain.handle(Channels.DELETE_STOCK_ASSET, deleteStockAsset);
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support");

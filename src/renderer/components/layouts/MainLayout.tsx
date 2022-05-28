@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 
 import { Portfolio } from "../../../../types";
 
-import Sidebar from "../Global/Sidebar";
+import Sidebar from "../global/Sidebar";
 
 interface MainLayoutProps {
     activePage: string;
@@ -26,12 +26,12 @@ const MainLayout = ({ activePage, children }: MainLayoutProps) => {
 
     return (
         <div className={`${darkMode ? "dark" : ""}`}>
-            <div className="w-full h-screen bg-neutral-900 text-black dark:text-white font-sans">
+            <div className="w-full min-h-screen flex bg-neutral-900 text-black dark:text-white font-sans">
                 {portfolios.length ? (
-                    <div className="h-full flex">
+                    <>
                         <Sidebar {...{ activePage, portfolios }} />
                         {children}
-                    </div>
+                    </>
                 ) : (
                     children
                 )}

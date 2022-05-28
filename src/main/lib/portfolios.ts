@@ -146,3 +146,38 @@ export const updateStockAsset = async (
 
     return portfolio;
 };
+
+export const deleteStockAsset = async (
+    _event: IpcMainInvokeEvent,
+    portfolioSlug: string,
+    stockTicker: string
+) => {
+    const userDataPath = app.getPath("userData");
+
+    const file = join(userDataPath, PORTFOLIOS_DB_FILENAME);
+    const adapter = new JSONFile<DBSchema>(file);
+    const db = new Low(adapter);
+
+    await db.read();
+
+    db.data ||= { portfolios: [] };
+    const { portfolios } = db.data;
+
+    const portfolio = _.find(portfolios, ["slug", portfolioSlug]);
+
+    if (portfolio) {
+        const { assets } = portfolio;
+
+        if (_.some(assets, ["symbol", stockTicker])) {
+            portfolio.assets = _.reject(assets, ["symbol", stockTicker]);
+
+            await db.write();
+        } else {
+            throw new Error("no asset to remove");
+        }
+
+        await fetchStockQuotes(portfolio);
+    }
+
+    return portfolio;
+};

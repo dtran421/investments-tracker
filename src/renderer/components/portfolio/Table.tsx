@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import {
     useTable,
     Column,
@@ -6,9 +6,18 @@ import {
     useFlexLayout,
     useSortBy
 } from "react-table";
-
+import _ from "lodash";
 import { AiFillCaretDown, AiFillCaretUp } from "react-icons/ai";
-import { DefaultCell, NumberCell, AddCell } from "./Cells";
+import { FiDollarSign, FiPercent } from "react-icons/fi";
+
+import {
+    DefaultCell,
+    DeleteCell,
+    NumberCell,
+    SummaryCell,
+    TextCell
+} from "./Cells";
+import { AddCell } from "./EditableCells";
 
 import { AssetData } from "../../../../types";
 
@@ -27,17 +36,46 @@ const Table = ({ assetData }: TableProps) => {
                     {
                         Header: "Symbol",
                         accessor: "symbol",
-                        Footer: AddCell
+                        Footer: AddCell,
+                        width: 75
                     },
                     {
                         Header: "Description",
                         accessor: "description",
-                        Footer: ""
+                        Footer: "",
+                        Cell: ({
+                            row: {
+                                values: { symbol }
+                            },
+                            column: { id: field },
+                            value
+                        }: CellProps<AssetData, string>) => {
+                            return (
+                                <TextCell
+                                    editable={symbol !== "Cash"}
+                                    {...{ symbol, value, field }}
+                                />
+                            );
+                        }
                     },
                     {
                         Header: "Sector",
                         accessor: "sector",
-                        Footer: ""
+                        Footer: "",
+                        Cell: ({
+                            row: {
+                                values: { symbol }
+                            },
+                            column: { id: field },
+                            value
+                        }: CellProps<AssetData, string>) => {
+                            return (
+                                <TextCell
+                                    editable={symbol !== "Cash"}
+                                    {...{ symbol, value, field }}
+                                />
+                            );
+                        }
                     }
                 ]
             },
@@ -85,7 +123,18 @@ const Table = ({ assetData }: TableProps) => {
                     {
                         Header: "Market Value",
                         accessor: "marketValue",
-                        Footer: "",
+                        Footer: ({
+                            value: amount
+                        }: CellProps<AssetData, number>) => (
+                            <SummaryCell
+                                type="dollar"
+                                columnValues={_.map(
+                                    assetData,
+                                    ({ marketValue }) => marketValue
+                                )}
+                                {...{ amount }}
+                            />
+                        ),
                         Cell: ({ value }: CellProps<AssetData, number>) => (
                             <NumberCell type="dollar" amount={value} />
                         )
@@ -105,16 +154,33 @@ const Table = ({ assetData }: TableProps) => {
                                 <NumberCell
                                     type="dollar"
                                     amount={value}
-                                    editable
+                                    editable={symbol !== "Cash"}
                                     {...{ symbol, field }}
                                 />
                             );
                         }
                     },
                     {
-                        Header: "Gain/Loss $",
+                        Header: (
+                            <div className="flex items-center text-lg text-center space-x-1 py-1">
+                                <span>Gain/Loss</span>
+                                <FiDollarSign size={18} />
+                            </div>
+                        ),
                         accessor: "dollarGain",
-                        Footer: "",
+                        Footer: ({
+                            value: amount
+                        }: CellProps<AssetData, number>) => (
+                            <SummaryCell
+                                type="dollar"
+                                showGain
+                                columnValues={_.map(
+                                    assetData,
+                                    ({ dollarGain }) => dollarGain
+                                )}
+                                {...{ amount }}
+                            />
+                        ),
                         Cell: ({
                             row: { index },
                             value
@@ -122,14 +188,32 @@ const Table = ({ assetData }: TableProps) => {
                             <NumberCell
                                 type="dollar"
                                 amount={value}
+                                showGain
                                 lastRow={index === assetData.length - 1}
                             />
                         )
                     },
                     {
-                        Header: "Gain/Loss %",
+                        Header: (
+                            <div className="flex items-center text-lg text-center space-x-1 py-1">
+                                <span>Gain/Loss</span>
+                                <FiPercent size={18} />
+                            </div>
+                        ),
                         accessor: "percentGain",
-                        Footer: "",
+                        Footer: ({
+                            value: amount
+                        }: CellProps<AssetData, number>) => (
+                            <SummaryCell
+                                type="dollar"
+                                columnValues={_.map(
+                                    assetData,
+                                    ({ percentGain }) => percentGain
+                                )}
+                                showGain
+                                {...{ amount }}
+                            />
+                        ),
                         Cell: ({
                             row: { index },
                             value
@@ -137,6 +221,7 @@ const Table = ({ assetData }: TableProps) => {
                             <NumberCell
                                 type="percent"
                                 amount={value}
+                                showGain
                                 lastRow={index === assetData.length - 1}
                             />
                         )
@@ -147,12 +232,25 @@ const Table = ({ assetData }: TableProps) => {
                         Footer: "",
                         Cell: ({ value }: CellProps<AssetData, number>) => (
                             <NumberCell type="percent" amount={value} />
-                        )
+                        ),
+                        width: 100
                     }
                 ]
+            },
+            {
+                Header: "",
+                id: "delete",
+                Cell: ({
+                    row: {
+                        values: { symbol }
+                    }
+                }: CellProps<AssetData, ReactNode>) => (
+                    <DeleteCell {...{ symbol }} />
+                ),
+                width: 50
             }
         ],
-        [assetData.length]
+        [assetData]
     );
 
     const defaultColumn = {
@@ -182,73 +280,75 @@ const Table = ({ assetData }: TableProps) => {
     } = holdingsTable;
 
     return (
-        <div className="w-full">
-            <table {...getTableProps()} className="space-y-2">
-                <thead>
-                    {headerGroups.map((headerGroup) => (
-                        <tr
-                            {...headerGroup.getHeaderGroupProps()}
-                            className="border-b-2 border-neutral-700"
-                        >
-                            {headerGroup.headers.map((column) => {
-                                const sortIcon = column.isSortedDesc ? (
-                                    <AiFillCaretDown size={18} />
-                                ) : (
-                                    <AiFillCaretUp size={18} />
-                                );
+        <table {...getTableProps()} className="w-full">
+            <thead>
+                {headerGroups.map((headerGroup) => (
+                    <tr
+                        {...headerGroup.getHeaderGroupProps()}
+                        className="border-b-2 border-neutral-700"
+                    >
+                        {headerGroup.headers.map((column) => {
+                            const sortIcon = column.isSortedDesc ? (
+                                <AiFillCaretDown size={18} />
+                            ) : (
+                                <AiFillCaretUp size={18} />
+                            );
 
+                            return (
+                                <th
+                                    {...column.getHeaderProps(
+                                        column.getSortByToggleProps()
+                                    )}
+                                    className="flex justify-center items-center space-x-2 my-2"
+                                >
+                                    <h2 className="text-xl font-normal select-none">
+                                        {column.render("Header")}
+                                    </h2>
+                                    {column.isSorted ? (
+                                        <div className="text-orange-500">
+                                            {sortIcon}
+                                        </div>
+                                    ) : null}
+                                </th>
+                            );
+                        })}
+                    </tr>
+                ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+                {rows.map((row) => {
+                    prepareRow(row);
+                    return (
+                        <tr
+                            {...row.getRowProps()}
+                            className="hover:bg-neutral-700/50 rounded-lg space-x-2"
+                        >
+                            {row.cells.map((cell) => {
                                 return (
-                                    <th
-                                        {...column.getHeaderProps(
-                                            column.getSortByToggleProps()
-                                        )}
-                                        className="flex justify-center items-center space-x-2 m-2"
+                                    <td
+                                        {...cell.getCellProps()}
+                                        className="flex justify-center items-center"
                                     >
-                                        <h2 className="text-xl font-normal">
-                                            {column.render("Header")}
-                                        </h2>
-                                        {column.isSorted ? sortIcon : null}
-                                    </th>
+                                        {cell.render("Cell")}
+                                    </td>
                                 );
                             })}
                         </tr>
-                    ))}
-                </thead>
-                <tbody {...getTableBodyProps()}>
-                    {rows.map((row) => {
-                        prepareRow(row);
-                        return (
-                            <tr
-                                {...row.getRowProps()}
-                                className="hover:bg-neutral-700/50 rounded-lg space-x-2 my-4"
-                            >
-                                {row.cells.map((cell) => {
-                                    return (
-                                        <td
-                                            {...cell.getCellProps()}
-                                            className="h-20 flex justify-center items-center"
-                                        >
-                                            {cell.render("Cell")}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        );
-                    })}
-                </tbody>
-                <tfoot>
-                    {footerGroups.map((group) => (
-                        <tr {...group.getFooterGroupProps()}>
-                            {group.headers.map((column) => (
-                                <td {...column.getFooterProps()}>
-                                    {column.render("Footer")}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tfoot>
-            </table>
-        </div>
+                    );
+                })}
+            </tbody>
+            <tfoot>
+                {footerGroups.map((group) => (
+                    <tr {...group.getFooterGroupProps()}>
+                        {group.headers.map((column) => (
+                            <td {...column.getFooterProps()}>
+                                {column.render("Footer")}
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </tfoot>
+        </table>
     );
 };
 

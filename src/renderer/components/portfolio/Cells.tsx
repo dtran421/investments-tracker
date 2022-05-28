@@ -1,15 +1,10 @@
-import {
-    ChangeEvent,
-    Dispatch,
-    FormEvent,
-    SetStateAction,
-    useContext,
-    useEffect,
-    useRef,
-    useState
-} from "react";
-import { AiOutlinePlus } from "react-icons/ai";
+import { useContext, useState } from "react";
 import { FiDollarSign, FiMinus, FiPercent } from "react-icons/fi";
+import _ from "lodash";
+
+import { AiOutlineClose } from "react-icons/ai";
+import { EditCell } from "./EditableCells";
+
 import Contexts from "../../../../Contexts";
 
 interface DefaultCellProps {
@@ -17,72 +12,84 @@ interface DefaultCellProps {
 }
 
 export const DefaultCell = ({ value }: DefaultCellProps) => {
-    return <p className="text-lg text-center py-1">{value}</p>;
+    return <p className="text-lg text-center">{value}</p>;
 };
 
-interface EditCellProps {
-    initialValue: number;
+interface TextCellProps {
     symbol: string;
+    value: string;
+    editable?: boolean;
     field: string;
-    toggleEditing: Dispatch<SetStateAction<boolean>>;
 }
 
-export const EditCell = ({
-    initialValue,
+export const TextCell = ({
     symbol,
-    field,
-    toggleEditing
-}: EditCellProps) => {
-    const { PortfolioContext } = Contexts;
-    const { updateAsset } = useContext(PortfolioContext);
+    value,
+    editable = false,
+    field
+}: TextCellProps) => {
+    const [isEditing, toggleEditing] = useState(false);
 
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    const [value, setValue] = useState(initialValue.toString());
-
-    useEffect(() => {
-        inputRef?.current?.focus();
-    }, [initialValue]);
-
-    const onChange = (ev: ChangeEvent) => {
-        const { value: inputValue } = ev.target as HTMLInputElement;
-        const numInput = parseInt(inputValue, 10);
-        if (inputValue === "") {
-            setValue("0");
-        } else if (/\d+\.?\d*/.test(inputValue)) {
-            if (parseInt(value, 10) === 0) {
-                if (numInput === 0 || Number.isNaN(numInput)) {
-                    setValue(value);
-                } else {
-                    setValue(numInput.toString());
-                }
-            } else {
-                setValue(inputValue);
-            }
-        }
-    };
-
-    const updateAssetField = (ev: FormEvent) => {
-        updateAsset(ev, symbol, { field, value: parseFloat(value) });
-        toggleEditing(false);
-    };
-
-    return (
-        <form onSubmit={updateAssetField}>
-            <input
-                ref={inputRef}
-                value={value}
-                className="w-full bg-transparent text-lg text-center outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-neutral-800 rounded-lg p-1"
-                onChange={onChange}
-                onBlur={() => toggleEditing(false)}
+    if (isEditing) {
+        return (
+            <EditCell
+                initialValue={value || ""}
+                {...{ symbol, field, toggleEditing }}
             />
-        </form>
+        );
+    }
+    if (editable) {
+        return (
+            <button
+                type="button"
+                className="w-full h-full flex justify-center items-center py-2"
+                onClick={() => toggleEditing(!isEditing)}
+            >
+                <DefaultCell {...{ value }} />
+            </button>
+        );
+    }
+    return (
+        <div className="w-full h-full flex justify-center items-center py-2">
+            <DefaultCell {...{ value }} />
+        </div>
     );
 };
 
-interface NumberCellProps {
+interface NumberTextProps {
     type: "plain" | "dollar" | "percent";
     amount: number;
+    showGain?: boolean;
+}
+
+const NumberText = ({ type, amount, showGain }: NumberTextProps) => {
+    const gained = amount >= 0;
+    const sign = gained ? "+" : "-";
+
+    const zeroCell = amount === 0;
+
+    return zeroCell ? (
+        <FiMinus size={18} />
+    ) : (
+        <p
+            className={`flex justify-center items-center text-lg text-white ${
+                // eslint-disable-next-line no-nested-ternary
+                showGain
+                    ? gained
+                        ? "bg-emerald-500/60"
+                        : "bg-rose-500/60"
+                    : ""
+            } rounded-lg px-3 py-2`}
+        >
+            <span>{showGain && sign}</span>
+            {type === "dollar" && <FiDollarSign size={18} />}
+            <span>{Math.abs(amount).toFixed(type === "plain" ? 6 : 2)}</span>
+            {type === "percent" && <FiPercent size={18} />}
+        </p>
+    );
+};
+
+interface NumberCellProps extends NumberTextProps {
     symbol?: string;
     field?: string;
     showGain?: boolean;
@@ -101,96 +108,73 @@ export const NumberCell = ({
 }: NumberCellProps) => {
     const [isEditing, toggleEditing] = useState(false);
 
-    const gained = amount >= 0;
-    const sign = gained ? "+" : "-";
-
-    const gainClass = gained ? "text-emerald-500" : "text-rose-500";
-
-    const zeroCell =
-        amount === 0 || amount === Infinity || Number.isNaN(amount);
-
     if (lastRow) {
         return null;
     }
-
-    return isEditing ? (
-        <EditCell initialValue={amount} {...{ symbol, field, toggleEditing }} />
-    ) : (
-        <button
-            type="button"
-            className={`w-full h-full flex justify-center items-center text-lg ${
-                showGain ? gainClass : "text-white"
-            } py-1`}
-            onClick={() => toggleEditing(!isEditing)}
-            disabled={!editable}
-        >
-            {zeroCell ? (
-                <FiMinus size={18} />
-            ) : (
-                <>
-                    <span>{showGain && sign}</span>
-                    {type === "dollar" && <FiDollarSign size={18} />}
-                    <span>{amount.toFixed(type === "plain" ? 6 : 2)}</span>
-                    {type === "percent" && <FiPercent size={18} />}
-                </>
-            )}
-        </button>
+    if (isEditing) {
+        return (
+            <EditCell
+                initialValue={amount}
+                {...{ symbol, field, toggleEditing }}
+            />
+        );
+    }
+    if (editable) {
+        return (
+            <button
+                type="button"
+                className="w-full h-full flex justify-center items-center py-2"
+                onClick={() => toggleEditing(!isEditing)}
+            >
+                <NumberText {...{ type, amount, showGain }} />
+            </button>
+        );
+    }
+    return (
+        <div className="w-full h-full flex justify-center items-center py-2">
+            <NumberText {...{ type, amount, showGain }} />
+        </div>
     );
 };
 
-export const AddCell = () => {
-    const { PortfolioContext } = Contexts;
-    const { updateAsset } = useContext(PortfolioContext);
+interface SummaryCellProps extends NumberTextProps {
+    columnValues: number[];
+}
 
-    const inputRef = useRef(null);
-
-    const [stockTicker, setValue] = useState("");
-    const [isEditing, toggleIsEditing] = useState(false);
-
-    useEffect(() => {
-        if (isEditing && inputRef.current) {
-            (inputRef.current as HTMLInputElement).focus();
-        }
-    }, [isEditing]);
-
-    const reset = () => {
-        toggleIsEditing(!isEditing);
-        setValue("");
-    };
-
-    const addAsset = (ev: FormEvent) => {
-        updateAsset(ev, stockTicker, null);
-        reset();
-    };
+export const SummaryCell = ({
+    type,
+    showGain,
+    columnValues
+}: SummaryCellProps) => {
+    const computedValue = _.sum(columnValues);
 
     return (
-        <div className="flex justify-center">
-            {isEditing ? (
-                <form onSubmit={addAsset} className="flex justify-center">
-                    <input
-                        ref={inputRef}
-                        value={stockTicker}
-                        className="w-3/4 text-lg text-center bg-transparent outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-neutral-800 rounded-lg px-2 py-1 mx-2"
-                        onChange={(ev: ChangeEvent) => {
-                            setValue(
-                                (
-                                    ev.target as HTMLInputElement
-                                ).value.toUpperCase()
-                            );
-                        }}
-                        onBlur={() => reset()}
-                    />
-                </form>
-            ) : (
-                <button
-                    type="button"
-                    className="flex items-center text-neutral-300 hover:text-white bg-neutral-700/30 hover:bg-neutral-600/40 transition duration-150 ease-linear rounded-lg space-x-2 px-4 py-2"
-                    onClick={() => toggleIsEditing(!isEditing)}
-                >
-                    <AiOutlinePlus size={18} />
-                    <span className="text-lg">Add</span>
-                </button>
-            )}
+        <div className="h-full flex justify-center items-center border-t-2 border-neutral-700 py-4 mx-1">
+            <NumberText amount={computedValue} {...{ type, showGain }} />
+        </div>
+    );
+};
+
+interface DeleteCellProps {
+    symbol: string;
+}
+
+export const DeleteCell = ({ symbol }: DeleteCellProps) => {
+    const { PortfolioContext } = Contexts;
+    const { deleteAsset } = useContext(PortfolioContext);
+
+    return (
+        <div className="h-full flex justify-center items-center">
+            <button
+                type="button"
+                className="flex items-center text-neutral-300 hover:text-white hover:bg-neutral-600/40 transition duration-150 ease-linear rounded-lg group space-x-2 p-2"
+                onClick={() => deleteAsset(symbol)}
+            >
+                <AiOutlineClose
+                    size={18}
+                    className="text-red-700/75 group-hover:text-red-600"
+                />
+            </button>
         </div>
     );
 };
