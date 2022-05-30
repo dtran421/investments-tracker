@@ -1,28 +1,52 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import _ from "lodash";
 
 import TabLayout from "../components/layouts/TabLayout";
-
-import { PortfolioData } from "../../../types";
 import Calculator from "./calculator";
 import Composition from "./composition";
 import Holdings from "./holdings";
 
+import { PortfolioData } from "../../../types";
+
 const stockTabs = ["Holdings", "Composition", "Calculator"];
 
 const Portfolio = () => {
+    const navigate = useNavigate();
     const { portfolioSlug } = useParams();
 
-    const [[openTabs, changeStatus], setOpenTabs] = useState([stockTabs, ""]);
-    const [activeTab, setActiveTab] = useState("");
+    const [[openTabs, changeStatus], setOpenTabs] = useState<
+        [string[], "initial" | "open" | "close" | ""]
+    >([stockTabs, "initial"]);
+    const [[activeTab, activeIdx], setActiveTab] = useState(["", -1]);
 
     useEffect(() => {
-        if (changeStatus === "open" || changeStatus === "close") {
-            setActiveTab(openTabs[openTabs.length - 1]);
-        } else {
-            setActiveTab(openTabs[0]);
+        switch (changeStatus) {
+            case "initial":
+                setActiveTab([openTabs[0], 0]);
+                break;
+            case "open":
+                setActiveTab([
+                    openTabs[openTabs.length - 1],
+                    openTabs.length - 1
+                ]);
+                break;
+            case "close":
+                if (!_.includes(openTabs, activeTab)) {
+                    if (openTabs.length === 0) {
+                        navigate(`/`);
+                    } else if (activeIdx < openTabs.length) {
+                        setActiveTab([openTabs[activeIdx], activeIdx]);
+                    } else {
+                        setActiveTab([openTabs[activeIdx - 1], activeIdx]);
+                    }
+                }
+                break;
+            default:
+                break;
         }
-    }, [changeStatus, openTabs]);
+        setOpenTabs([openTabs, ""]);
+    }, [activeIdx, activeTab, changeStatus, navigate, openTabs]);
 
     const [portfolio, setPortfolio] = useState<PortfolioData>({
         slug: "",

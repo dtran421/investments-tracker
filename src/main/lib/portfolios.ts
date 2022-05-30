@@ -237,7 +237,7 @@ export const deleteTxn = async (
             portfolio.txnQueue = _.reject(txnQueue, ["symbol", tickerSymbol]);
 
             if (updateAsset) {
-                const { shares } = txn;
+                const { mode, shares } = txn;
 
                 const stockQuote = await fetchStockInfo(tickerSymbol);
                 const { [tickerSymbol]: price } = await fetchStockQuotes(
@@ -258,7 +258,8 @@ export const deleteTxn = async (
 
                         const newQuantity = currShares + shares;
                         const newCostBasis =
-                            (currShares * currCostBasis + shares * price) /
+                            (currShares * currCostBasis +
+                                (mode === "buy" ? 1 : -1) * shares * price) /
                             newQuantity;
 
                         modifiedStockQuote = {
@@ -274,7 +275,9 @@ export const deleteTxn = async (
                         };
                     }
 
-                    cash.quantity -= Number((shares * price).toFixed(6));
+                    cash.quantity +=
+                        (mode === "buy" ? -1 : 1) *
+                        Number((shares * price).toFixed(6));
 
                     portfolio.assets = [
                         modifiedStockQuote,

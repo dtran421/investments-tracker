@@ -142,7 +142,19 @@ const Table = ({ assetData }: TableProps) => {
                     {
                         Header: "Cost Basis",
                         accessor: "costBasis",
-                        Footer: "",
+                        Footer: ({
+                            value: amount
+                        }: CellProps<AssetData, number>) => (
+                            <SummaryCell
+                                type="dollar"
+                                columnValues={_.map(
+                                    assetData,
+                                    ({ quantity, costBasis }) =>
+                                        quantity * costBasis
+                                )}
+                                {...{ amount }}
+                            />
+                        ),
                         Cell: ({
                             row: {
                                 values: { symbol }
@@ -279,7 +291,7 @@ const Table = ({ assetData }: TableProps) => {
     } = holdingsTable;
 
     return (
-        <table {...getTableProps()} className="w-full">
+        <table {...getTableProps()} className="w-full cursor-cell">
             <thead>
                 {headerGroups.map((headerGroup) => (
                     <tr
