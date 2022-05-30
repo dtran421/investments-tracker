@@ -3,8 +3,8 @@ import { app, IpcMainInvokeEvent } from "electron";
 import { Low, JSONFile } from "lowdb";
 import _ from "lodash";
 
-import { DBSchema } from "../../../types";
-import { fetchStockInfo, fetchStockQuotes } from "./stocks";
+import { DBSchema, Transaction } from "../../../types";
+import { fetchStockInfo, fetchStockQuotes, getAssetData } from "./stocks";
 
 const PORTFOLIOS_DB_FILENAME = "portfolios.json";
 
@@ -14,19 +14,14 @@ export const initializePortfolio = async (
 ) => {
     const userDataPath = app.getPath("userData");
 
-    // Use JSON file for storage
     const file = join(userDataPath, PORTFOLIOS_DB_FILENAME);
     const adapter = new JSONFile<DBSchema>(file);
     const db = new Low(adapter);
 
-    // Read data from JSON file, this will set db.data content
     await db.read();
 
-    // If file.json doesn't exist, db.data will be null
-    // Set default data
     db.data ||= { portfolios: [] };
 
-    // Create and query items using plain JS
     const portfolioSlug = _.kebabCase(portfolioName);
     const { portfolios } = db.data;
     if (!_.find(portfolios, ["slug", portfolioSlug])) {
@@ -41,10 +36,10 @@ export const initializePortfolio = async (
                     quantity: 0,
                     costBasis: 1
                 }
-            ]
+            ],
+            txnQueue: []
         });
 
-        // write db.data content to file
         await db.write();
 
         console.info("portfolio initialized successfully");
@@ -90,7 +85,7 @@ export const fetchPortfolio = async (
     const portfolio = _.find(portfolios, ["slug", portfolioSlug]);
 
     if (portfolio) {
-        await fetchStockQuotes(portfolio);
+        await getAssetData(_event, portfolio);
     }
 
     return portfolio;
@@ -98,7 +93,9 @@ export const fetchPortfolio = async (
 
 export const updateStockAsset = async (
     _event: IpcMainInvokeEvent,
-    args: [string, string, { field: string; value: string | number } | null]
+    portfolioSlug: string,
+    tickerSymbol: string,
+    updateField: { field: string; value: string | number } | null
 ) => {
     const userDataPath = app.getPath("userData");
 
@@ -111,37 +108,32 @@ export const updateStockAsset = async (
     db.data ||= { portfolios: [] };
     const { portfolios } = db.data;
 
-    const [portfolioSlug, stockTicker, updateField] = args;
-
     const portfolio = _.find(portfolios, ["slug", portfolioSlug]);
 
     if (portfolio) {
         const { assets } = portfolio;
 
         if (!updateField) {
-            const stockQuote = await fetchStockInfo(stockTicker);
+            const stockQuote = await fetchStockInfo(tickerSymbol);
 
             if (stockQuote) {
                 portfolio.assets = [stockQuote, ...assets];
-
-                await db.write();
             } else {
                 throw new Error("couldn't add new asset");
             }
         } else {
             const { field, value } = updateField;
 
-            const index = _.findIndex(assets, ["symbol", stockTicker]);
+            const index = _.findIndex(assets, ["symbol", tickerSymbol]);
             portfolio.assets[index] = _.set(
                 portfolio.assets[index],
                 field,
                 value
             );
-
-            await db.write();
         }
+        await db.write();
 
-        await fetchStockQuotes(portfolio);
+        await getAssetData(_event, portfolio);
     }
 
     return portfolio;
@@ -150,7 +142,7 @@ export const updateStockAsset = async (
 export const deleteStockAsset = async (
     _event: IpcMainInvokeEvent,
     portfolioSlug: string,
-    stockTicker: string
+    tickerSymbol: string
 ) => {
     const userDataPath = app.getPath("userData");
 
@@ -168,16 +160,135 @@ export const deleteStockAsset = async (
     if (portfolio) {
         const { assets } = portfolio;
 
-        if (_.some(assets, ["symbol", stockTicker])) {
-            portfolio.assets = _.reject(assets, ["symbol", stockTicker]);
+        if (_.some(assets, ["symbol", tickerSymbol])) {
+            portfolio.assets = _.reject(assets, ["symbol", tickerSymbol]);
 
             await db.write();
         } else {
             throw new Error("no asset to remove");
         }
 
-        await fetchStockQuotes(portfolio);
+        await getAssetData(_event, portfolio);
     }
 
     return portfolio;
+};
+
+export const updateTxn = async (
+    _event: IpcMainInvokeEvent,
+    portfolioSlug: string,
+    txn: Transaction
+) => {
+    const userDataPath = app.getPath("userData");
+
+    const file = join(userDataPath, PORTFOLIOS_DB_FILENAME);
+    const adapter = new JSONFile<DBSchema>(file);
+    const db = new Low(adapter);
+
+    await db.read();
+
+    db.data ||= { portfolios: [] };
+    const { portfolios } = db.data;
+
+    const portfolio = _.find(portfolios, ["slug", portfolioSlug]);
+
+    if (portfolio) {
+        const { txnQueue } = portfolio;
+
+        const index = _.findIndex(txnQueue, ["symbol", txn.symbol]);
+        if (index === -1) {
+            portfolio.txnQueue = [...txnQueue, txn];
+        } else {
+            portfolio.txnQueue[index] = txn;
+        }
+
+        await db.write();
+
+        return portfolio.txnQueue;
+    }
+
+    return [];
+};
+
+export const deleteTxn = async (
+    _event: IpcMainInvokeEvent,
+    portfolioSlug: string,
+    tickerSymbol: string,
+    updateAsset: boolean
+) => {
+    const userDataPath = app.getPath("userData");
+
+    const file = join(userDataPath, PORTFOLIOS_DB_FILENAME);
+    const adapter = new JSONFile<DBSchema>(file);
+    const db = new Low(adapter);
+
+    await db.read();
+
+    db.data ||= { portfolios: [] };
+    const { portfolios } = db.data;
+
+    const portfolio = _.find(portfolios, ["slug", portfolioSlug]);
+
+    if (portfolio) {
+        const { assets, txnQueue } = portfolio;
+
+        const txn = _.find(txnQueue, ["symbol", tickerSymbol]);
+        if (txn) {
+            portfolio.txnQueue = _.reject(txnQueue, ["symbol", tickerSymbol]);
+
+            if (updateAsset) {
+                const { shares } = txn;
+
+                const stockQuote = await fetchStockInfo(tickerSymbol);
+                const { [tickerSymbol]: price } = await fetchStockQuotes(
+                    _event,
+                    [tickerSymbol]
+                );
+
+                if (stockQuote) {
+                    const asset = _.find(assets, ["symbol", tickerSymbol]);
+
+                    let modifiedStockQuote;
+                    if (asset) {
+                        portfolio.assets = _.reject(assets, [
+                            "symbol",
+                            tickerSymbol
+                        ]);
+
+                        const {
+                            quantity: currShares,
+                            costBasis: currCostBasis
+                        } = asset;
+                        const newQuantity = currShares + shares;
+
+                        modifiedStockQuote = {
+                            ...stockQuote,
+                            quantity: newQuantity,
+                            costBasis:
+                                (currShares * currCostBasis + shares * price) /
+                                newQuantity
+                        };
+                    } else {
+                        modifiedStockQuote = {
+                            ...stockQuote,
+                            quantity: shares,
+                            costBasis: price
+                        };
+                    }
+
+                    portfolio.assets = [modifiedStockQuote, ...assets];
+                } else {
+                    throw new Error("couldn't add new asset");
+                }
+            }
+
+            await db.write();
+        } else {
+            throw new Error("no asset to remove");
+        }
+
+        return portfolio.txnQueue;
+    }
+
+    return [];
 };

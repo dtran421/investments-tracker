@@ -6,7 +6,10 @@ export enum Channels {
     "FETCH_PORTFOLIOS" = "fetchPortfolios",
     "FETCH_PORTFOLIO" = "fetchPortfolio",
     "UPDATE_STOCK_ASSET" = "updateStockAsset",
-    "DELETE_STOCK_ASSET" = "deleteStockAsset"
+    "DELETE_STOCK_ASSET" = "deleteStockAsset",
+    "FETCH_STOCK_QUOTE" = "fetchStockQuote",
+    "UPDATE_TXN" = "updateTxn",
+    "DELETE_TXN" = "deleteTxn"
 }
 
 /**
@@ -20,11 +23,20 @@ export interface Asset {
     costBasis: number;
 }
 
+export interface Transaction {
+    mode: "buy" | "sell";
+    symbol: string;
+    allocation: number;
+    shares: number;
+    costBasis: number;
+}
+
 export interface Portfolio {
     slug: string;
     name: string;
     order: number;
     assets: Asset[];
+    txnQueue: Transaction[];
 }
 
 export interface DBSchema {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import Table from "renderer/components/portfolio/Table";
+import Table from "../components/portfolio/Table";
 
 import Contexts from "../../../Contexts";
 import { AssetData } from "../../../types";
@@ -8,10 +8,10 @@ import { AssetData } from "../../../types";
 interface HoldingsProps {
     assets: AssetData[];
     updateAsset: (
-        stockTicker: string,
+        tickerSymbol: string,
         updateField: { field: string; value: string | number } | null
     ) => Promise<void>;
-    deleteAsset: (stockTicker: string) => Promise<void>;
+    deleteAsset: (tickerSymbol: string) => Promise<void>;
 }
 
 const Holdings = ({ assets, updateAsset, deleteAsset }: HoldingsProps) => {

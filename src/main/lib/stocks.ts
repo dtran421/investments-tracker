@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { IpcMainInvokeEvent } from "electron";
 import _ from "lodash";
 import fetch from "node-fetch";
 
@@ -6,7 +7,10 @@ import { Portfolio } from "../../../types";
 
 const Alpaca = require("@alpacahq/alpaca-trade-api");
 
-export const fetchStockQuotes = async (portfolio: Portfolio) => {
+export const fetchStockQuotes = async (
+    _event: IpcMainInvokeEvent,
+    tickerSymbols: string[]
+) => {
     try {
         const alpaca = new Alpaca({
             keyId: process.env.APCA_API_KEY_ID,
@@ -14,19 +18,33 @@ export const fetchStockQuotes = async (portfolio: Portfolio) => {
             paper: true
         });
 
+        const quotes = Object.fromEntries(
+            await alpaca.getLatestTrades(tickerSymbols)
+        );
+
+        return _.mapValues(quotes, "Price");
+    } catch (err) {
+        console.error(
+            `something went wrong with alpaca getting stock quotes: ${err}`
+        );
+        throw err;
+    }
+};
+
+export const getAssetData = async (
+    _event: IpcMainInvokeEvent,
+    portfolio: Portfolio
+) => {
+    try {
         const { assets } = portfolio;
-        const stockTickers = _.map(
+        const tickerSymbols = _.map(
             _.slice(assets, 0, assets.length - 1),
             ({ symbol }) => symbol
         );
 
         let stockPrices: Record<string, number> = {};
-        if (stockTickers.length) {
-            const quotes = Object.fromEntries(
-                await alpaca.getLatestTrades(stockTickers)
-            );
-
-            stockPrices = _.mapValues(quotes, "Price");
+        if (tickerSymbols.length) {
+            stockPrices = await fetchStockQuotes(_event, tickerSymbols);
         }
 
         if (Object.keys(stockPrices).length || assets.length === 1) {
@@ -78,10 +96,10 @@ export const fetchStockQuotes = async (portfolio: Portfolio) => {
     }
 };
 
-export const fetchStockInfo = async (stockTicker: string) => {
+export const fetchStockInfo = async (tickerSymbol: string) => {
     try {
         const response = await fetch(
-            `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${stockTicker}&apikey=${process.env.ALPHAVANTAGE_API_KEY}`,
+            `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${tickerSymbol}&apikey=${process.env.ALPHAVANTAGE_API_KEY}`,
             {
                 method: "GET",
                 headers: {
@@ -97,7 +115,7 @@ export const fetchStockInfo = async (stockTicker: string) => {
         };
 
         return {
-            symbol: stockTicker,
+            symbol: tickerSymbol,
             description: name,
             sector: _.startCase(_.toLower(sector)),
             quantity: 0,

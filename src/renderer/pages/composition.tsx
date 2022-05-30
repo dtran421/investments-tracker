@@ -6,7 +6,7 @@ import getChartConfig, {
     assetColorPalette,
     interpolatorFn,
     sectorColorPalette
-} from "renderer/components/composition/ChartConfig";
+} from "../components/composition/ChartConfig";
 import { AssetData } from "../../../types";
 
 ChartJS.register(ArcElement, Tooltip, Legend);

@@ -2,8 +2,8 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlinePlus } from "react-icons/ai";
 
-import MainLayout from "renderer/components/layouts/MainLayout";
-import Modal from "renderer/components/index/Modal";
+import MainLayout from "../components/layouts/MainLayout";
+import Modal from "../components/index/Modal";
 
 import logo from "../../../assets/logo.png";
 

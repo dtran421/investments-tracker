@@ -10,6 +10,7 @@ import {
 } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 
+import validateNumberInput from "../../lib/validateNumberInput";
 import Contexts from "../../../../Contexts";
 
 export interface EditableProps {
@@ -39,9 +40,9 @@ export const EditInput = ({
         inputRef?.current?.focus();
     }, []);
 
-    const updateAssetField = (ev: FormEvent) => {
+    const updateAssetField = async (ev: FormEvent) => {
         ev.preventDefault();
-        updateAsset(symbol, { field, value });
+        await updateAsset(symbol, { field, value });
         toggleEditing(false);
     };
 
@@ -73,20 +74,7 @@ export const EditCell = ({
         const { value: inputValue } = ev.target as HTMLInputElement;
 
         if (typeof initialValue === "number") {
-            const numInput = parseInt(inputValue, 10);
-            if (inputValue === "") {
-                setValue("0");
-            } else if (/^\d+\.?\d*$/.test(inputValue)) {
-                if (parseInt(value, 10) === 0 && !inputValue.includes(".")) {
-                    if (numInput === 0 || Number.isNaN(numInput)) {
-                        setValue(parseFloat(value).toString());
-                    } else {
-                        setValue(numInput.toString());
-                    }
-                } else {
-                    setValue(inputValue);
-                }
-            }
+            setValue(validateNumberInput(value, inputValue));
         } else {
             setValue(inputValue);
         }
@@ -101,7 +89,7 @@ export const AddCell = () => {
 
     const inputRef = useRef(null);
 
-    const [stockTicker, setValue] = useState("");
+    const [tickerSymbol, setValue] = useState("");
     const [isEditing, toggleIsEditing] = useState(false);
 
     useEffect(() => {
@@ -117,7 +105,7 @@ export const AddCell = () => {
 
     const addAsset = (ev: FormEvent) => {
         ev.preventDefault();
-        updateAsset(stockTicker, null);
+        updateAsset(tickerSymbol, null);
         reset();
     };
 
@@ -127,7 +115,7 @@ export const AddCell = () => {
                 <form onSubmit={addAsset} className="flex justify-center">
                     <input
                         ref={inputRef}
-                        value={stockTicker}
+                        value={tickerSymbol}
                         className="w-3/4 text-lg text-center bg-transparent outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-neutral-800 rounded-lg px-2 py-1 mx-2"
                         onChange={(ev: ChangeEvent) => {
                             setValue(

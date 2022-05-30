@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import TabLayout from "renderer/components/layouts/TabLayout";
+import TabLayout from "../components/layouts/TabLayout";
 
 import { PortfolioData } from "../../../types";
 import Calculator from "./calculator";
@@ -24,7 +24,8 @@ const Portfolio = () => {
         slug: "",
         name: "",
         order: 0,
-        assets: []
+        assets: [],
+        txnQueue: []
     });
     useEffect(() => {
         const fetchPortfolio = async () => {
@@ -40,18 +41,18 @@ const Portfolio = () => {
         };
 
         fetchPortfolio();
-    }, [portfolioSlug]);
+    }, [portfolioSlug, activeTab]);
 
-    const { slug, name, assets } = portfolio;
+    const { slug, name, assets, txnQueue } = portfolio;
 
     const updateAsset = useCallback(
         async (
-            stockTicker: string,
+            tickerSymbol: string,
             updateField: { field: string; value: string | number } | null
         ) => {
             const portfolioData = await window.electronAPI.updateStock(
                 slug,
-                stockTicker,
+                tickerSymbol,
                 updateField
             );
 
@@ -61,10 +62,10 @@ const Portfolio = () => {
     );
 
     const deleteAsset = useCallback(
-        async (stockTicker: string) => {
+        async (tickerSymbol: string) => {
             const portfolioData = await window.electronAPI.deleteStock(
                 slug,
-                stockTicker
+                tickerSymbol
             );
 
             setPortfolio(portfolioData);
@@ -89,7 +90,9 @@ const Portfolio = () => {
             tabPage = <Composition {...{ assets }} />;
             break;
         case "Calculator":
-            tabPage = <Calculator {...{ assets }} />;
+            tabPage = (
+                <Calculator portfolioSlug={slug} {...{ assets, txnQueue }} />
+            );
             break;
         default:
             tabPage = null;

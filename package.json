@@ -79,8 +79,16 @@
         ],
         "moduleNameMapper": {
             "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/.erb/mocks/fileMock.js",
-            "\\.(css|less|sass|scss)$": "identity-obj-proxy"
+            "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+            "d3-interpolate": "<rootDir>/node_modules/d3-interpolate/dist/d3-interpolate.min.js",
+            "d3-color": "<rootDir>/node_modules/d3-color/dist/d3-color.min.js"
         },
+        "modulePaths": [
+            "<rootDir>"
+        ],
+        "roots": [
+            "<rootDir>"
+        ],
         "setupFiles": [
             "./.erb/scripts/check-build-exists.ts"
         ],
@@ -93,7 +101,10 @@
         ],
         "transform": {
             "\\.(ts|tsx|js|jsx)$": "ts-jest"
-        }
+        },
+        "transformIgnorePatterns": [
+            "/node_modules/(?!d3-interpolate|d3-color)"
+        ]
     },
     "dependencies": {
         "@alpacahq/alpaca-trade-api": "^2.15.0",

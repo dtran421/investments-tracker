@@ -18,11 +18,14 @@ import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
 import {
     deleteStockAsset,
+    deleteTxn,
     fetchPortfolio,
     fetchPortfolios,
     initializePortfolio,
-    updateStockAsset
+    updateStockAsset,
+    updateTxn
 } from "./lib/portfolios";
+import { fetchStockQuotes } from "./lib/stocks";
 
 export default class AppUpdater {
     constructor() {
@@ -35,14 +38,16 @@ export default class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.handle(Channels.INITIALIZE_PORTFOLIO, initializePortfolio);
-
 ipcMain.handle(Channels.FETCH_PORTFOLIOS, fetchPortfolios);
-
 ipcMain.handle(Channels.FETCH_PORTFOLIO, fetchPortfolio);
 
 ipcMain.handle(Channels.UPDATE_STOCK_ASSET, updateStockAsset);
-
 ipcMain.handle(Channels.DELETE_STOCK_ASSET, deleteStockAsset);
+
+ipcMain.handle(Channels.FETCH_STOCK_QUOTE, fetchStockQuotes);
+
+ipcMain.handle(Channels.UPDATE_TXN, updateTxn);
+ipcMain.handle(Channels.DELETE_TXN, deleteTxn);
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support");

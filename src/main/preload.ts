@@ -1,41 +1,43 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { Channels } from "../../types";
+import { Channels, Transaction } from "../../types";
 
 contextBridge.exposeInMainWorld("electronAPI", {
     createPortfolio: (portfolioName: string) =>
         ipcRenderer.invoke(Channels.INITIALIZE_PORTFOLIO, portfolioName),
-    // onCreateReturn: (func: (str: string) => void) => {
-    //     const subscription = (_event: IpcRendererEvent, str: string) =>
-    //         func(str);
-    //     ipcRenderer.on(Channels.INITIALIZE_PORTFOLIO, subscription);
-
-    //     return () =>
-    //         ipcRenderer.removeListener(
-    //             Channels.INITIALIZE_PORTFOLIO,
-    //             subscription
-    //         );
-    // },
-    // once(channel: Channels, func: (...args: unknown[]) => void) {
-    //     ipcRenderer.once(channel, (_event, ...args) => func(...args));
-    // }
     getPortfolios: () => ipcRenderer.invoke(Channels.FETCH_PORTFOLIOS),
     getPortfolio: (portfolioSlug: string) =>
         ipcRenderer.invoke(Channels.FETCH_PORTFOLIO, portfolioSlug),
+    getStockQuote: (tickerSymbol: string) =>
+        ipcRenderer.invoke(Channels.FETCH_STOCK_QUOTE, [tickerSymbol]),
     updateStock: (
         portfolioSlug: string,
-        stockTicker: string,
+        tickerSymbol: string,
         updateField: { field: string; value: string | number } | null
     ) =>
-        ipcRenderer.invoke(Channels.UPDATE_STOCK_ASSET, [
+        ipcRenderer.invoke(
+            Channels.UPDATE_STOCK_ASSET,
             portfolioSlug,
-            stockTicker,
+            tickerSymbol,
             updateField
-        ]),
-    deleteStock: (portfolioSlug: string, stockTicker: string) =>
+        ),
+    deleteStock: (portfolioSlug: string, tickerSymbol: string) =>
         ipcRenderer.invoke(
             Channels.DELETE_STOCK_ASSET,
             portfolioSlug,
-            stockTicker
+            tickerSymbol
+        ),
+    updateTxn: (portfolioSlug: string, txn: Transaction) =>
+        ipcRenderer.invoke(Channels.UPDATE_TXN, portfolioSlug, txn),
+    deleteTxn: (
+        portfolioSlug: string,
+        tickerSymbol: string,
+        updateAsset: boolean
+    ) =>
+        ipcRenderer.invoke(
+            Channels.DELETE_TXN,
+            portfolioSlug,
+            tickerSymbol,
+            updateAsset
         )
 });
