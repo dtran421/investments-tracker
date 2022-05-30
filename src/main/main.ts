@@ -8,12 +8,24 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
-import path from "path";
+import { join } from "path";
 import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
+
+import { Channels } from "../../types";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
+import {
+    deleteStockAsset,
+    deleteTxn,
+    fetchPortfolio,
+    fetchPortfolios,
+    initializePortfolio,
+    updateStockAsset,
+    updateTxn
+} from "./lib/portfolios";
+import { fetchStockQuotes } from "./lib/stocks";
 
 export default class AppUpdater {
     constructor() {
@@ -25,11 +37,17 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on("ipc-example", async (event, arg) => {
-    const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-    console.log(msgTemplate(arg));
-    event.reply("ipc-example", msgTemplate("pong"));
-});
+ipcMain.handle(Channels.INITIALIZE_PORTFOLIO, initializePortfolio);
+ipcMain.handle(Channels.FETCH_PORTFOLIOS, fetchPortfolios);
+ipcMain.handle(Channels.FETCH_PORTFOLIO, fetchPortfolio);
+
+ipcMain.handle(Channels.UPDATE_STOCK_ASSET, updateStockAsset);
+ipcMain.handle(Channels.DELETE_STOCK_ASSET, deleteStockAsset);
+
+ipcMain.handle(Channels.FETCH_STOCK_QUOTE, fetchStockQuotes);
+
+ipcMain.handle(Channels.UPDATE_TXN, updateTxn);
+ipcMain.handle(Channels.DELETE_TXN, deleteTxn);
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support");
@@ -62,22 +80,23 @@ const createWindow = async () => {
     }
 
     const RESOURCES_PATH = app.isPackaged
-        ? path.join(process.resourcesPath, "assets")
-        : path.join(__dirname, "../../assets");
+        ? join(process.resourcesPath, "assets")
+        : join(__dirname, "../../assets");
 
     const getAssetPath = (...paths: string[]): string => {
-        return path.join(RESOURCES_PATH, ...paths);
+        return join(RESOURCES_PATH, ...paths);
     };
 
+    // TODO: change this for production
     mainWindow = new BrowserWindow({
         show: false,
-        width: 1024,
-        height: 728,
-        icon: getAssetPath("icon.png"),
+        width: 1366,
+        height: 768,
+        icon: getAssetPath("logo.png"),
         webPreferences: {
             preload: app.isPackaged
-                ? path.join(__dirname, "preload.js")
-                : path.join(__dirname, "../../.erb/dll/preload.js")
+                ? join(__dirname, "preload.js")
+                : join(__dirname, "../../.erb/dll/preload.js")
         }
     });
 
@@ -90,6 +109,7 @@ const createWindow = async () => {
         if (process.env.START_MINIMIZED) {
             mainWindow.minimize();
         } else {
+            mainWindow.maximize();
             mainWindow.show();
         }
     });

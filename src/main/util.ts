@@ -1,6 +1,6 @@
 /* eslint import/prefer-default-export: off, import/no-mutable-exports: off */
 import { URL } from "url";
-import path from "path";
+import { resolve } from "path";
 
 export let resolveHtmlPath: (htmlFileName: string) => string;
 
@@ -13,10 +13,6 @@ if (process.env.NODE_ENV === "development") {
     };
 } else {
     resolveHtmlPath = (htmlFileName: string) => {
-        return `file://${path.resolve(
-            __dirname,
-            "../renderer/",
-            htmlFileName
-        )}`;
+        return `file://${resolve(__dirname, "../renderer/", htmlFileName)}`;
     };
 }
