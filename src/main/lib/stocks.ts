@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { IpcMainInvokeEvent } from "electron";
 import _ from "lodash";
 import fetch from "node-fetch";
@@ -7,14 +6,19 @@ import { Portfolio } from "../../../types";
 
 const Alpaca = require("@alpacahq/alpaca-trade-api");
 
+const APCA_API_KEY_ID = "PKEQQ7F6HZ1904PSCJIC";
+const APCA_API_SECRET_KEY = "zWD5pmztyE7ckbQHtXqPbe6JCRkTnATNZXXo8t8w";
+
+const ALPHAVANTAGE_API_KEY = "2PDSAV7CYDC8G2WQ";
+
 export const fetchStockQuotes = async (
     _event: IpcMainInvokeEvent,
     tickerSymbols: string[]
 ) => {
     try {
         const alpaca = new Alpaca({
-            keyId: process.env.APCA_API_KEY_ID,
-            secretKey: process.env.APCA_API_SECRET_KEY,
+            keyId: APCA_API_KEY_ID,
+            secretKey: APCA_API_SECRET_KEY,
             paper: true
         });
 
@@ -99,7 +103,7 @@ export const getAssetData = async (
 export const fetchStockInfo = async (tickerSymbol: string) => {
     try {
         const response = await fetch(
-            `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${tickerSymbol}&apikey=${process.env.ALPHAVANTAGE_API_KEY}`,
+            `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${tickerSymbol}&apikey=${ALPHAVANTAGE_API_KEY}`,
             {
                 method: "GET",
                 headers: {
