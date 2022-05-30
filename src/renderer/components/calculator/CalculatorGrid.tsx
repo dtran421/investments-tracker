@@ -102,7 +102,7 @@ const CalculatorGrid = ({
                                     (
                                         ev.target as HTMLInputElement
                                     ).value.toUpperCase(),
-                                    targetAllocation,
+                                    "0",
                                     true,
                                     false
                                 ]);
@@ -134,8 +134,8 @@ const CalculatorGrid = ({
                         <div
                             className={`${
                                 invalidAllocation
-                                    ? "bg-red-700/60 text-red-500"
-                                    : "bg-neutral-700/60 text-orange-500/80"
+                                    ? "bg-red-700/40 text-red-500"
+                                    : "bg-neutral-700/40 text-orange-500/80"
                             } transition duration-150 ease-linear rounded-lg p-1`}
                         >
                             {buyMode ? (

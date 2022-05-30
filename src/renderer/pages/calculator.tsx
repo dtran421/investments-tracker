@@ -65,13 +65,15 @@ const Calculator = ({
 
             setInputs([
                 tickerSymbol,
-                newCurrentAllocation.toFixed(2),
+                targetAllocation !== "0"
+                    ? targetAllocation
+                    : newCurrentAllocation.toFixed(2),
                 editingTicker,
                 false
             ]);
             setFixedValues([price, newMarketValue, newCurrentAllocation]);
         },
-        [editingTicker, tickerSymbol]
+        [editingTicker, targetAllocation, tickerSymbol]
     );
 
     useEffect(() => {
@@ -82,7 +84,7 @@ const Calculator = ({
                 const {
                     buyMode: newBuyMode,
                     tickerSymbol: newTickerSymbol,
-                    allocation: newTargetAllocation,
+                    targetAllocation: newTargetAllocation,
                     shares: newShares,
                     costBasis: newCostBasis
                 } = JSON.parse(transactionDataJSON);
@@ -144,14 +146,21 @@ const Calculator = ({
 
     const [invalidAllocation, toggleInvalidAllocation] = useState(false);
     useEffect(() => {
-        if (buyMode && Number(targetAllocation) <= currentAllocation) {
-            toggleInvalidAllocation(true);
-        } else if (!buyMode && Number(targetAllocation) >= currentAllocation) {
-            toggleInvalidAllocation(true);
+        if (!editingTicker) {
+            if (buyMode && Number(targetAllocation) <= currentAllocation) {
+                toggleInvalidAllocation(true);
+            } else if (
+                !buyMode &&
+                Number(targetAllocation) >= currentAllocation
+            ) {
+                toggleInvalidAllocation(true);
+            } else {
+                toggleInvalidAllocation(false);
+            }
         } else {
             toggleInvalidAllocation(false);
         }
-    }, [buyMode, currentAllocation, targetAllocation]);
+    }, [buyMode, currentAllocation, editingTicker, targetAllocation]);
 
     const reset = () => {
         setInputs(["", "0", true, false]);

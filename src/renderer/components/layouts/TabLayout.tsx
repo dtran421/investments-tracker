@@ -9,7 +9,7 @@ interface TabProps {
     active: boolean;
     setActiveTab: Dispatch<SetStateAction<string>>;
     openTabs: string[];
-    setOpenTabs: Dispatch<SetStateAction<string[]>>;
+    setOpenTabs: Dispatch<SetStateAction<[string[], string]>>;
 }
 
 const Tab = ({
@@ -19,6 +19,10 @@ const Tab = ({
     openTabs,
     setOpenTabs
 }: TabProps) => {
+    const closeTab = () => {
+        setOpenTabs([_.without(openTabs, label), "close"]);
+    };
+
     return (
         <div className="relative group">
             <div
@@ -38,7 +42,7 @@ const Tab = ({
                 <button
                     type="button"
                     className="hover:bg-neutral-600/50 rounded-md transition duration-50 ease-linear p-1"
-                    onClick={() => setOpenTabs(_.without(openTabs, label))}
+                    onClick={() => closeTab()}
                 >
                     <AiOutlineClose size={14} />
                 </button>
@@ -59,7 +63,7 @@ const Tab = ({
 interface TabLayoutProps {
     tabs: string[];
     openTabs: string[];
-    setOpenTabs: Dispatch<SetStateAction<string[]>>;
+    setOpenTabs: Dispatch<SetStateAction<[string[], string]>>;
     activeTab: string;
     setActiveTab: Dispatch<SetStateAction<string>>;
     activePage: string;
@@ -103,10 +107,13 @@ const TabLayout = ({
                                 className="flex items-center bg-orange-700/30 text-orange-400 transition duration-100 ease-in space-x-1 rounded-lg px-2 py-1 ml-3"
                                 onClick={() =>
                                     setOpenTabs([
-                                        ...openTabs,
-                                        _.first(
-                                            _.without(tabs, ...openTabs)
-                                        ) as string
+                                        [
+                                            ...openTabs,
+                                            _.first(
+                                                _.without(tabs, ...openTabs)
+                                            ) as string
+                                        ],
+                                        "open"
                                     ])
                                 }
                             >

@@ -21,6 +21,7 @@ export interface EditableProps {
 
 interface EditInputProps extends EditableProps {
     value: string;
+    dataType: string;
     onChange: (ev: ChangeEvent) => void;
 }
 
@@ -28,6 +29,7 @@ export const EditInput = ({
     symbol,
     field,
     value,
+    dataType,
     onChange,
     toggleEditing
 }: EditInputProps) => {
@@ -42,7 +44,10 @@ export const EditInput = ({
 
     const updateAssetField = async (ev: FormEvent) => {
         ev.preventDefault();
-        await updateAsset(symbol, { field, value });
+        await updateAsset(symbol, {
+            field,
+            value: dataType === "string" ? value : Number(value)
+        });
         toggleEditing(false);
     };
 
@@ -68,19 +73,24 @@ export const EditCell = ({
     field,
     toggleEditing
 }: EditCellProps) => {
+    const dataType = typeof initialValue;
     const [value, setValue] = useState(initialValue.toString());
 
     const onChange = (ev: ChangeEvent) => {
         const { value: inputValue } = ev.target as HTMLInputElement;
 
-        if (typeof initialValue === "number") {
+        if (dataType === "number") {
             setValue(validateNumberInput(value, inputValue));
         } else {
             setValue(inputValue);
         }
     };
 
-    return <EditInput {...{ symbol, field, value, onChange, toggleEditing }} />;
+    return (
+        <EditInput
+            {...{ symbol, field, value, dataType, onChange, toggleEditing }}
+        />
+    );
 };
 
 export const AddCell = () => {

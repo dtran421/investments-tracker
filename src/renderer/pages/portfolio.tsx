@@ -13,12 +13,16 @@ const stockTabs = ["Holdings", "Composition", "Calculator"];
 const Portfolio = () => {
     const { portfolioSlug } = useParams();
 
-    const [openTabs, setOpenTabs] = useState(stockTabs);
-    const [activeTab, setActiveTab] = useState(stockTabs[0]);
+    const [[openTabs, changeStatus], setOpenTabs] = useState([stockTabs, ""]);
+    const [activeTab, setActiveTab] = useState("");
 
     useEffect(() => {
-        setActiveTab(openTabs[openTabs.length - 1]);
-    }, [openTabs]);
+        if (changeStatus === "open" || changeStatus === "close") {
+            setActiveTab(openTabs[openTabs.length - 1]);
+        } else {
+            setActiveTab(openTabs[0]);
+        }
+    }, [changeStatus, openTabs]);
 
     const [portfolio, setPortfolio] = useState<PortfolioData>({
         slug: "",
@@ -111,7 +115,7 @@ const Portfolio = () => {
             <div className="space-y-6 p-8">
                 <div className="flex space-x-6">
                     <p className="text-4xl font-semibold">{name}</p>
-                    <div className="flex items-center text-emerald-500 bg-emerald-800/60 rounded-lg px-4 py-1">
+                    <div className="flex items-center text-emerald-500 bg-emerald-800/40 rounded-lg px-4 py-1">
                         <p>Stocks</p>
                     </div>
                 </div>

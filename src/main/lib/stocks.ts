@@ -63,7 +63,7 @@ export const getAssetData = async (
 
                 const price = stockPrices[symbol];
                 const profitPerShare = costBasis ? price - costBasis : 0;
-                const marketValue = quantity * costBasis;
+                const marketValue = quantity * price;
                 const percentGain = costBasis
                     ? (profitPerShare / costBasis) * 100
                     : 0;

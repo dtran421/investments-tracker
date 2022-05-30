@@ -3,7 +3,7 @@ import { app, IpcMainInvokeEvent } from "electron";
 import { Low, JSONFile } from "lowdb";
 import _ from "lodash";
 
-import { DBSchema, Transaction } from "../../../types";
+import { DBSchema, Asset, Transaction } from "../../../types";
 import { fetchStockInfo, fetchStockQuotes, getAssetData } from "./stocks";
 
 const PORTFOLIOS_DB_FILENAME = "portfolios.json";
@@ -246,27 +246,25 @@ export const deleteTxn = async (
                 );
 
                 if (stockQuote) {
+                    const cash = _.find(assets, ["symbol", "Cash"]) as Asset;
                     const asset = _.find(assets, ["symbol", tickerSymbol]);
 
                     let modifiedStockQuote;
                     if (asset) {
-                        portfolio.assets = _.reject(assets, [
-                            "symbol",
-                            tickerSymbol
-                        ]);
-
                         const {
                             quantity: currShares,
                             costBasis: currCostBasis
                         } = asset;
+
                         const newQuantity = currShares + shares;
+                        const newCostBasis =
+                            (currShares * currCostBasis + shares * price) /
+                            newQuantity;
 
                         modifiedStockQuote = {
                             ...stockQuote,
                             quantity: newQuantity,
-                            costBasis:
-                                (currShares * currCostBasis + shares * price) /
-                                newQuantity
+                            costBasis: newCostBasis
                         };
                     } else {
                         modifiedStockQuote = {
@@ -276,7 +274,17 @@ export const deleteTxn = async (
                         };
                     }
 
-                    portfolio.assets = [modifiedStockQuote, ...assets];
+                    cash.quantity -= Number((shares * price).toFixed(6));
+
+                    portfolio.assets = [
+                        modifiedStockQuote,
+                        ..._.filter(
+                            assets,
+                            ({ symbol }) =>
+                                symbol !== tickerSymbol && symbol !== "Cash"
+                        ),
+                        cash
+                    ];
                 } else {
                     throw new Error("couldn't add new asset");
                 }

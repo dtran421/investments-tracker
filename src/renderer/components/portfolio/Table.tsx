@@ -244,9 +244,8 @@ const Table = ({ assetData }: TableProps) => {
                     row: {
                         values: { symbol }
                     }
-                }: CellProps<AssetData, ReactNode>) => (
-                    <DeleteCell {...{ symbol }} />
-                ),
+                }: CellProps<AssetData, ReactNode>) =>
+                    symbol !== "Cash" ? <DeleteCell {...{ symbol }} /> : null,
                 width: 50
             }
         ],
