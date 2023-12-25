@@ -10,7 +10,7 @@ import {
 } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 
-import validateNumberInput from "../../lib/validateNumberInput";
+import validateNumberInput from "../../utils/validateNumberInput";
 import Contexts from "../../../../Contexts";
 
 export interface EditableProps {
