@@ -13,19 +13,13 @@ import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 
-import { Channels } from "../renderer/types/types";
+import { Channel } from "../renderer/types/api";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
-import {
-  deleteStockAsset,
-  deleteTxn,
-  fetchPortfolio,
-  fetchPortfolios,
-  initializePortfolio,
-  updateStockAsset,
-  updateTxn,
-} from "./lib/portfolios";
-import { fetchStockQuotes } from "./lib/stocks";
+import { initializePortfolio, fetchPortfolios, fetchPortfolio } from "./handlers/portfolios";
+import { deleteStockAsset, updateStockAsset } from "./handlers/stocks";
+import { fetchStockQuotes } from "./api/stocks";
+import { updateTransaction, deleteTransaction } from "./handlers/transactions";
 
 export default class AppUpdater {
   constructor() {
@@ -37,17 +31,21 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.handle(Channels.INITIALIZE_PORTFOLIO, initializePortfolio);
-ipcMain.handle(Channels.FETCH_PORTFOLIOS, fetchPortfolios);
-ipcMain.handle(Channels.FETCH_PORTFOLIO, fetchPortfolio);
+// portfolios
+ipcMain.handle(Channel.INITIALIZE_PORTFOLIO, initializePortfolio);
+ipcMain.handle(Channel.FETCH_PORTFOLIOS, fetchPortfolios);
+ipcMain.handle(Channel.FETCH_PORTFOLIO, fetchPortfolio);
 
-ipcMain.handle(Channels.UPDATE_STOCK_ASSET, updateStockAsset);
-ipcMain.handle(Channels.DELETE_STOCK_ASSET, deleteStockAsset);
+// stocks
+ipcMain.handle(Channel.UPDATE_STOCK_ASSET, updateStockAsset);
+ipcMain.handle(Channel.DELETE_STOCK_ASSET, deleteStockAsset);
 
-ipcMain.handle(Channels.FETCH_STOCK_QUOTE, fetchStockQuotes);
+// stock API
+ipcMain.handle(Channel.FETCH_STOCK_QUOTE, fetchStockQuotes);
 
-ipcMain.handle(Channels.UPDATE_TXN, updateTxn);
-ipcMain.handle(Channels.DELETE_TXN, deleteTxn);
+// transactions
+ipcMain.handle(Channel.UPDATE_TRANSACTION, updateTransaction);
+ipcMain.handle(Channel.DELETE_TRANSACTION, deleteTransaction);
 
 if (process.env.NODE_ENV === "production") {
   const sourceMapSupport = require("source-map-support");

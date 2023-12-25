@@ -4,8 +4,8 @@ import App from "./App";
 
 const container = document.getElementById("root");
 if (container) {
-    const root = createRoot(container);
-    root.render(<App />);
+  const root = createRoot(container);
+  root.render(<App />);
 }
 
-// window.electronAPI.ipcRenderer.sendMessage(Channels.IPC_EXAMPLE, ["ping"]);
+// window.electronAPI.ipcRenderer.sendMessage(Channel.IPC_EXAMPLE, ["ping"]);

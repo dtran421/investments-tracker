@@ -22,12 +22,11 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@alpacahq/alpaca-trade-api@^2.15.0":
-  version "2.16.1"
-  resolved "https://registry.yarnpkg.com/@alpacahq/alpaca-trade-api/-/alpaca-trade-api-2.16.1.tgz#446d22b54d4a1d017626b9a0c5cf3d81c0b677c7"
-  integrity sha512-Jdq79opgVW7sOn/R1Bq36CbuLILMLRAxiQx1yMNP8Q4cqA1YPVElHXtujfBJ9bI72NMFywPaNnioj8VKaPNXeA==
+"@alpacahq/alpaca-trade-api@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@alpacahq/alpaca-trade-api/-/alpaca-trade-api-3.0.1.tgz#464447612af2ca4499939327b4ca7a83c87282a9"
+  integrity sha512-FOsgA4jREAArWbb7nuKTo2yiUdb8+/4vboyTX2SRJSi+oYBaFrZV+hMNx7fGWtuLuKGRKEdK8Nc+8MFjwcbz4g==
   dependencies:
-    "@types/node" "^16.9.6"
     axios "^0.21.1"
     dotenv "^6.2.0"
     events "^3.2.0"
@@ -1277,7 +1276,7 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.33.tgz#3c1879b276dc63e73030bb91165e62a4509cd506"
   integrity sha512-miWq2m2FiQZmaHfdZNcbpp9PuXg34W5JZ5CrJ/BaS70VuhoJENBEQybeiYSaPBRNq6KQGnjfEnc/F3PN++D+XQ==
 
-"@types/node@^16.11.26", "@types/node@^16.9.6":
+"@types/node@^16.11.26":
   version "16.18.68"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.18.68.tgz#3155f64a961b3d8d10246c80657f9a7292e3421a"
   integrity sha512-sG3hPIQwJLoewrN7cr0dwEy+yF5nD4D/4FxtQpFciRD/xwUzgD+G05uxZHv5mhfXo4F9Jkp13jjn0CC2q325sg==

@@ -88,7 +88,7 @@
     ]
   },
   "dependencies": {
-    "@alpacahq/alpaca-trade-api": "^2.15.0",
+    "@alpacahq/alpaca-trade-api": "^3.0.1",
     "chart.js": "^3.8.0",
     "d3-color": "^3.1.0",
     "d3-interpolate": "^3.0.1",
