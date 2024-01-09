@@ -7,7 +7,7 @@ import getChartConfig, {
   interpolatorFn,
   sectorColorPalette,
 } from "../components/composition/ChartConfig";
-import { AssetData } from "../types/types";
+import { AssetData } from "../types/frontend";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

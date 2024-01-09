@@ -1,9 +1,5 @@
-import { Asset } from "webpack";
-import { Portfolio } from "./db";
+import { Asset, Portfolio } from "./db";
 
-/**
- * Frontend types
- */
 export interface AssetData extends Asset {
   price: number;
   marketValue: number;
@@ -12,6 +8,6 @@ export interface AssetData extends Asset {
   allocation: number;
 }
 
-export interface PortfolioData extends Omit<Portfolio, "assets"> {
+export interface PortfolioData extends Portfolio {
   assets: AssetData[];
 }

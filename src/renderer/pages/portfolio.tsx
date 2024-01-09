@@ -7,7 +7,7 @@ import Calculator from "./calculator";
 import Composition from "./composition";
 import Holdings from "./holdings";
 
-import { PortfolioData } from "../types/types";
+import { PortfolioData } from "../types/frontend";
 
 const stockTabs = ["Holdings", "Composition", "Calculator"];
 
@@ -49,9 +49,8 @@ const Portfolio = () => {
   const [portfolio, setPortfolio] = useState<PortfolioData>({
     slug: "",
     name: "",
-    order: 0,
     assets: [],
-    txnQueue: [],
+    transactionQueue: [],
   });
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -67,7 +66,7 @@ const Portfolio = () => {
     fetchPortfolio();
   }, [portfolioSlug, activeTab]);
 
-  const { slug, name, assets, txnQueue } = portfolio;
+  const { slug, name, assets, transactionQueue } = portfolio;
 
   const updateAsset = useCallback(
     async (tickerSymbol: string, updateField: { field: string; value: string | number } | null) => {
@@ -104,7 +103,7 @@ const Portfolio = () => {
       tabPage = <Composition {...{ assets }} />;
       break;
     case "Calculator":
-      tabPage = <Calculator portfolioSlug={slug} {...{ assets, txnQueue }} />;
+      tabPage = <Calculator portfolioSlug={slug} {...{ assets, transactionQueue }} />;
       break;
     default:
       tabPage = null;

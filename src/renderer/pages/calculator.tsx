@@ -4,17 +4,18 @@ import _ from "lodash";
 
 import { Grid, HeadingLabel, NumberCell, TxnCell } from "../components/calculator/Cells";
 
-import { AssetData, Transaction, TransactionMode } from "../types/types";
+import { AssetData } from "../types/frontend";
+import { Transaction, TransactionMode } from "renderer/types/db";
 import CalculatorGrid, { CalculatorRow } from "../components/calculator/CalculatorGrid";
 
 interface CalculatorProps {
   portfolioSlug: string;
   assets: AssetData[];
-  txnQueue: Transaction[];
+  transactionQueue: Transaction[];
 }
 
-const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorProps) => {
-  const totalPortfolioValue = _.sum(_.map(assets, ({ marketValue: assetMarketValue }) => assetMarketValue));
+const Calculator = (props: CalculatorProps) => {
+  const totalPortfolioValue = _.sum(_.map(props.assets, ({ marketValue: assetMarketValue }) => assetMarketValue));
 
   const [isInitialLoad, toggleInitialLoad] = useState(true);
 
@@ -28,7 +29,7 @@ const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorP
   const [sharesMode, toggleSharesMode] = useState(true);
   const [[shares, costBasis], setTxnQuantities] = useState([0, 0]);
 
-  const [txnQueue, setTxnQueue] = useState<Transaction[]>(inTxnQueue);
+  const [transactionQueue, settransactionQueue] = useState<Transaction[]>(props.transactionQueue);
 
   const getStockQuote = useCallback(
     async (asset: AssetData | undefined, ev?: FormEvent) => {
@@ -84,7 +85,7 @@ const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorP
 
   useEffect(() => {
     if (submittedTicker) {
-      getStockQuote(_.find(assets, ["symbol", tickerSymbol]));
+      getStockQuote(_.find(props.assets, ["symbol", tickerSymbol]));
     }
 
     if (tickerSymbol && targetAllocation && Number(targetAllocation) > 0) {
@@ -97,7 +98,7 @@ const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorP
     }
   }, [
     submittedTicker,
-    assets,
+    props.assets,
     tickerSymbol,
     assetPrice,
     getStockQuote,
@@ -126,20 +127,20 @@ const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorP
   };
 
   const appendTxn = async () => {
-    const newTxnQueue = await window.electronAPI.updateTxn(portfolioSlug, {
+    const newtransactionQueue = await window.electronAPI.updateTransaction(props.portfolioSlug, {
       transactionMode,
       tickerSymbol,
       targetAllocation: Number(targetAllocation),
       shares,
       costBasis,
     });
-    setTxnQueue(newTxnQueue);
+    settransactionQueue(newtransactionQueue);
     reset();
   };
 
   const removeTxn = async (symbol: string, updateAsset: boolean) => {
-    const newTxnQueue = await window.electronAPI.deleteTxn(portfolioSlug, symbol, updateAsset);
-    setTxnQueue(newTxnQueue);
+    const newtransactionQueue = await window.electronAPI.deleteTransaction(props.portfolioSlug, symbol, updateAsset);
+    settransactionQueue(newtransactionQueue);
   };
 
   return (
@@ -207,7 +208,7 @@ const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorP
               disabled={
                 !_.every([tickerSymbol, targetAllocation, shares, costBasis, !editingTicker]) ||
                 invalidAllocation ||
-                Boolean(_.find(txnQueue, ["symbol", tickerSymbol]))
+                Boolean(_.find(transactionQueue, ["symbol", tickerSymbol]))
               }
             >
               <FiPlusCircle size={24} />
@@ -227,7 +228,7 @@ const Calculator = ({ portfolioSlug, assets, txnQueue: inTxnQueue }: CalculatorP
             <HeadingLabel>Target Allocation</HeadingLabel>
             <HeadingLabel>Shares</HeadingLabel>
             <HeadingLabel>Cost Basis</HeadingLabel>
-            {txnQueue.map(
+            {transactionQueue.map(
               ({ transactionMode, tickerSymbol, targetAllocation, shares: txnShares, costBasis: txnCostBasis }) => (
                 <Fragment key={tickerSymbol}>
                   <div className="w-full flex justify-start items-center space-x-4 pl-2">

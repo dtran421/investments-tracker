@@ -1,34 +1,41 @@
 import { IpcMainInvokeEvent } from "electron";
-import { LowDB, Transaction, TransactionMode } from "../../renderer/types/db";
-import { getPortfolioFromDB, withDB } from "./db";
+import { Transaction, TransactionMode } from "../../renderer/types/db";
+import { DbWrapper, withDB } from "./db";
 import { fetchStockInfo, fetchStockQuote } from "../api/stocks";
-import { CASH_SYMBOL } from "./portfolios";
 
 export const updateTransaction = withDB(
-  async (_event: IpcMainInvokeEvent, db: LowDB, portfolioSlug: string, transaction: Transaction) => {
-    const portfolio = await getPortfolioFromDB(db, portfolioSlug);
+  async (_event: IpcMainInvokeEvent, db: DbWrapper, portfolioSlug: string, transaction: Transaction) => {
+    const portfolio = await db.getPortfolio(portfolioSlug);
 
     if (!portfolio) {
       // TODO: change this to account for non-existent portfolio
       return [];
     }
 
-    const index = portfolio.transactionQueue.findIndex((txn) => txn.tickerSymbol === transaction.tickerSymbol);
+    const { transactionQueue } = portfolio;
+
+    const index = transactionQueue.findIndex((txn) => txn.tickerSymbol === transaction.tickerSymbol);
     if (index === -1) {
-      portfolio.transactionQueue = [...portfolio.transactionQueue, transaction];
+      transactionQueue.push(transaction);
     } else {
-      portfolio.transactionQueue[index] = transaction;
+      transactionQueue[index] = transaction;
     }
 
-    await db.write();
+    await db.updatePortfolio(portfolio);
 
-    return portfolio.transactionQueue;
+    return transactionQueue;
   }
 );
 
 export const deleteTransaction = withDB(
-  async (_event: IpcMainInvokeEvent, db: LowDB, portfolioSlug: string, tickerSymbol: string, updateAsset: boolean) => {
-    const portfolio = await getPortfolioFromDB(db, portfolioSlug);
+  async (
+    _event: IpcMainInvokeEvent,
+    db: DbWrapper,
+    portfolioSlug: string,
+    tickerSymbol: string,
+    updateAsset: boolean
+  ) => {
+    const portfolio = await db.getPortfolio(portfolioSlug);
 
     if (!portfolio) {
       // TODO: change this to account for non-existent portfolio
@@ -41,10 +48,9 @@ export const deleteTransaction = withDB(
       return portfolio.transactionQueue;
     }
 
-    portfolio.transactionQueue = portfolio.transactionQueue.filter((txn) => txn.tickerSymbol !== tickerSymbol);
-
     if (!updateAsset) {
-      await db.write();
+      portfolio.transactionQueue = portfolio.transactionQueue.filter((txn) => txn.tickerSymbol !== tickerSymbol);
+      await db.updatePortfolio(portfolio);
       return portfolio.transactionQueue;
     }
 
@@ -56,14 +62,15 @@ export const deleteTransaction = withDB(
       return portfolio.transactionQueue;
     }
 
-    const cashIndex = portfolio.assets.findIndex((asset) => asset.symbol === CASH_SYMBOL);
-    const assetIndex = portfolio.assets.findIndex((asset) => asset.symbol === tickerSymbol);
+    const cashIndex = portfolio.assets.findIndex((asset) => asset.symbol === DbWrapper.CASH_SYMBOL);
 
     if (cashIndex === -1) {
       // TODO: change this to account for non-existent cash asset
       console.error("no cash asset found");
       return portfolio.transactionQueue;
     }
+
+    const assetIndex = portfolio.assets.findIndex((asset) => asset.symbol === tickerSymbol);
 
     const adjustmentMultiplier = transaction.transactionMode === TransactionMode.BUY ? 1 : -1;
 
@@ -87,7 +94,8 @@ export const deleteTransaction = withDB(
 
     portfolio.assets.unshift(newAsset);
 
-    await db.write();
+    await db.updatePortfolio(portfolio);
+
     return portfolio.transactionQueue;
   }
 );

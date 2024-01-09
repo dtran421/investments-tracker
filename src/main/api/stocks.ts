@@ -15,12 +15,11 @@ const alpaca = new Alpaca({
 
 const ALPHAVANTAGE_API_KEY = "2PDSAV7CYDC8G2WQ";
 
-export const fetchStockQuotes = async (
-  _event: IpcMainInvokeEvent,
-  tickerSymbols: string[]
-): Promise<{
+export interface StockPriceMap {
   [tickerSymbol: string]: number;
-}> => {
+}
+
+export const fetchStockQuotes = async (_event: IpcMainInvokeEvent, tickerSymbols: string[]): Promise<StockPriceMap> => {
   try {
     const latestTrades = await alpaca.getLatestTrades(tickerSymbols);
     const quotes = Object.fromEntries(latestTrades);

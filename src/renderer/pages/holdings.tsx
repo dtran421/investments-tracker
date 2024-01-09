@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import Table from "../components/portfolio/Table";
 
 import Contexts from "../../../Contexts";
-import { AssetData } from "../types/types";
+import { AssetData } from "../types/frontend";
 
 interface HoldingsProps {
   assets: AssetData[];

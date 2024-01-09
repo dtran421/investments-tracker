@@ -1,7 +1,7 @@
 import { ChangeEvent, ForwardedRef, forwardRef, ReactNode } from "react";
 import { FiMinus, FiDollarSign, FiPercent } from "react-icons/fi";
 import { cn } from "utils-toolkit";
-import { TransactionMode } from "../../types/types";
+import { TransactionMode } from "../../types/frontend";
 
 interface EditInputProps {
   value: string | number;

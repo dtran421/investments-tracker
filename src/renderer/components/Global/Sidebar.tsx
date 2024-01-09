@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiFillHome, AiOutlineLeft, AiOutlinePlus, AiOutlineRight, AiOutlineStock } from "react-icons/ai";
-import { Portfolio } from "../../types/types";
+import { PortfolioData } from "../../types/frontend";
 
 interface PageButtonProps {
   icon: ReactNode;
@@ -30,7 +30,7 @@ const PageButton = ({ icon, link, isActive, isExpanded, portfolioName, goToPage 
 
 interface SidebarProps {
   activePage: string;
-  portfolios: Portfolio[];
+  portfolios: PortfolioData[];
 }
 
 const Sidebar = ({ activePage, portfolios }: SidebarProps) => {

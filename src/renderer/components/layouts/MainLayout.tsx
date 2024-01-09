@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from "react";
 
-import { Portfolio } from "../../types/types";
+import { PortfolioData } from "../../types/frontend";
 
-import Sidebar from "../global/Sidebar";
+import Sidebar from "../Global/Sidebar";
 
 interface MainLayoutProps {
   activePage: string;
@@ -13,16 +13,23 @@ const MainLayout = ({ activePage, children }: MainLayoutProps) => {
   // TODO: implement dark mode toggle
   const [darkMode] = useState(true);
 
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  useEffect(() => {
-    const fetchPortfolios = async () => {
-      const newPortfolios = await window.electronAPI.getPortfolios();
+  const [initialized, setInitialized] = useState(false);
+  const [portfolios, setPortfolios] = useState<PortfolioData[]>([]);
 
-      setPortfolios(newPortfolios);
-    };
+  const fetchPortfolios = async () => {
+    const portfolios = await window.electronAPI.getPortfolios();
+
+    setPortfolios(portfolios);
+    setInitialized(true);
+  };
+
+  useEffect(() => {
+    if (initialized) {
+      return;
+    }
 
     fetchPortfolios();
-  }, []);
+  }, [initialized]);
 
   return (
     <div className={`${darkMode ? "dark" : ""}`}>

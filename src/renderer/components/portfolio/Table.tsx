@@ -7,7 +7,7 @@ import { FiDollarSign, FiPercent } from "react-icons/fi";
 import { DefaultCell, DeleteCell, NumberCell, SummaryCell, TextCell } from "./Cells";
 import { AddCell } from "./EditableCells";
 
-import { AssetData } from "../../types/types";
+import { AssetData } from "../../types/frontend";
 
 interface TableProps {
   assetData: AssetData[];

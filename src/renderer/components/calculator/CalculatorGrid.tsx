@@ -5,7 +5,7 @@ import { FiPercent } from "react-icons/fi";
 import { Grid, EditInput, NumberCell, BaseCell } from "./Cells";
 
 import validateNumberInput from "../../utils/validateNumberInput";
-import { TransactionMode } from "renderer/types/types";
+import { TransactionMode } from "renderer/types/frontend";
 
 interface CalculatorRowProps {
   label: string | JSX.Element;

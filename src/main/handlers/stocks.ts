@@ -1,80 +1,97 @@
 import { IpcMainInvokeEvent } from "electron";
 import _ from "lodash";
-import { Asset, LowDB, Portfolio } from "../../renderer/types/db";
-import { getPortfolioFromDB, withDB } from "./db";
-import { fetchStockInfo, fetchStockQuotes } from "../api/stocks";
+import { Asset, Portfolio } from "../../renderer/types/db";
+import { DbWrapper, withDB } from "./db";
+import { StockPriceMap, fetchStockInfo, fetchStockQuotes } from "../api/stocks";
+import { AssetData, PortfolioData } from "renderer/types/frontend";
 
-export const updatePortfolioAssetData = async (
+const calculateAllocation = (assetQuantity: number, assetPrice: number, totalPortfolioValue: number) =>
+  ((assetQuantity * assetPrice) / totalPortfolioValue) * 100;
+
+const getAssetsData = (assets: Asset[], stockPrices: StockPriceMap): AssetData[] => {
+  const totalPortfolioValue = assets.reduce((sum, asset) => sum + asset.quantity * stockPrices[asset.symbol], 0);
+
+  return assets.map((asset) => {
+    if (asset.symbol === "Cash") {
+      return {
+        ...asset,
+        price: 1,
+        marketValue: asset.quantity * asset.costBasis,
+        dollarGain: 0,
+        percentGain: 0,
+        allocation: calculateAllocation(asset.quantity, asset.costBasis, totalPortfolioValue),
+      };
+    }
+
+    const price = stockPrices[asset.symbol];
+    const profitPerShare = asset.costBasis ? price - asset.costBasis : 0;
+
+    return {
+      ...asset,
+      price,
+      marketValue: asset.quantity * price,
+      dollarGain: profitPerShare * asset.quantity,
+      percentGain: asset.costBasis ? (profitPerShare / asset.costBasis) * 100 : 0,
+      allocation: calculateAllocation(asset.quantity, price, totalPortfolioValue),
+    };
+  });
+};
+
+export const fetchPortfolioAssetData = async (
   _event: IpcMainInvokeEvent,
-  db: LowDB,
+  db: DbWrapper,
   portfolio: Portfolio
-): Promise<Portfolio> => {
-  const tickerSymbols = [...portfolio.assets].map((asset) => asset.symbol);
-
-  if (!tickerSymbols.length) {
-    return portfolio;
+): Promise<PortfolioData> => {
+  const { assets } = portfolio;
+  if (!assets.length) {
+    return portfolio as PortfolioData;
   }
 
   try {
+    const tickerSymbols = assets.map((asset) => asset.symbol);
     const stockPrices = await fetchStockQuotes(_event, tickerSymbols);
 
     if (!Object.keys(stockPrices).length) {
-      return portfolio;
+      throw new Error("no stock prices found");
     }
 
-    const assetData = portfolio.assets.map((asset) => {
-      if (asset.symbol === "Cash") {
-        return {
-          ...asset,
-          price: 1,
-          marketValue: asset.quantity * asset.costBasis,
-          dollarGain: 0,
-          percentGain: 0,
-        };
-      }
+    const portfolioWithRecentAssetData = {
+      ...portfolio,
+      assets: getAssetsData(assets, stockPrices),
+    };
 
-      const price = stockPrices[asset.symbol];
-      const profitPerShare = asset.costBasis ? price - asset.costBasis : 0;
+    await db.updatePortfolio(portfolioWithRecentAssetData);
 
-      return {
-        ...asset,
-        price,
-        marketValue: asset.quantity * price,
-        dollarGain: profitPerShare * asset.quantity,
-        percentGain: asset.costBasis ? (profitPerShare / asset.costBasis) * 100 : 0,
-      };
-    });
-
-    const totalPortfolioValue = assetData.reduce((sum, asset) => sum + asset.marketValue, 0);
-
-    portfolio.assets = assetData.map((asset) => ({
-      ...asset,
-      allocation: totalPortfolioValue ? (asset.marketValue / totalPortfolioValue) * 100 : 0,
-    }));
-
-    await db.write();
-    return portfolio;
+    return portfolioWithRecentAssetData;
   } catch (err) {
     console.error(`something went wrong with fetching stock quotes: ${err}`);
-    return portfolio;
+    return {
+      ...portfolio,
+      assets: assets.map((asset) => ({
+        ...asset,
+        price: 0,
+        marketValue: 0,
+        dollarGain: 0,
+        percentGain: 0,
+        allocation: 0,
+      })),
+    };
   }
 };
 
 export const updateStockAsset = withDB(
   async (
     _event: IpcMainInvokeEvent,
-    db: LowDB,
+    db: DbWrapper,
     portfolioSlug: string,
     tickerSymbol: string,
     // * can only be undefined if adding new asset
     asset?: Asset
-  ) => {
-    const portfolio = await getPortfolioFromDB(db, portfolioSlug);
+  ): Promise<PortfolioData> => {
+    const portfolio = await db.getPortfolio(portfolioSlug);
 
     if (!portfolio) {
-      // TODO: change this to account for non-existent portfolio
-      console.error("portfolio not found");
-      return null;
+      throw new Error("portfolio not found");
     }
 
     if (!asset) {
@@ -82,36 +99,65 @@ export const updateStockAsset = withDB(
 
       if (!stockQuote) {
         console.error("couldn't add new asset");
-        return null;
+        return {
+          ...portfolio,
+          assets: portfolio.assets.map((asset) => ({
+            ...asset,
+            price: 0,
+            marketValue: 0,
+            dollarGain: 0,
+            percentGain: 0,
+            allocation: 0,
+          })),
+        };
       }
 
       portfolio.assets.unshift(stockQuote);
-      return portfolio;
+
+      return await fetchPortfolioAssetData(_event, db, portfolio);
     }
 
     const index = portfolio.assets.findIndex((asset) => asset.symbol === tickerSymbol);
     portfolio.assets[index] = asset;
 
-    return await updatePortfolioAssetData(_event, db, portfolio);
+    return await fetchPortfolioAssetData(_event, db, portfolio);
   }
 );
 
 export const deleteStockAsset = withDB(
-  async (_event: IpcMainInvokeEvent, db: LowDB, portfolioSlug: string, tickerSymbol: string) => {
-    const portfolio = await getPortfolioFromDB(db, portfolioSlug);
+  async (
+    _event: IpcMainInvokeEvent,
+    db: DbWrapper,
+    portfolioSlug: string,
+    tickerSymbol: string
+  ): Promise<PortfolioData> => {
+    const portfolio = await db.getPortfolio(portfolioSlug);
 
     if (!portfolio) {
-      // TODO: change this to account for non-existent portfolio
-      return null;
+      throw new Error("portfolio not found");
     }
 
-    if (!portfolio.assets.some((asset) => asset.symbol === tickerSymbol)) {
+    const { assets } = portfolio;
+    if (!assets.some((asset) => asset.symbol === tickerSymbol)) {
       console.error("no asset to remove");
-      return null;
+      return {
+        ...portfolio,
+        assets: assets.map((asset) => ({
+          ...asset,
+          price: 0,
+          marketValue: 0,
+          dollarGain: 0,
+          percentGain: 0,
+          allocation: 0,
+        })),
+      };
     }
 
-    portfolio.assets = portfolio.assets.filter((asset) => asset.symbol !== tickerSymbol);
+    await db.updatePortfolio({
+      ...portfolio,
+      assets: assets.filter((asset) => asset.symbol !== tickerSymbol),
+    });
 
-    return await updatePortfolioAssetData(_event, db, portfolio);
+    return await fetchPortfolioAssetData(_event, db, portfolio);
   }
 );

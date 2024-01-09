@@ -1,5 +1,5 @@
 import { Portfolio, Transaction } from "./types/db";
-import { PortfolioData } from "./types/types";
+import { PortfolioData } from "./types/frontend";
 
 declare global {
   interface Window {
@@ -8,8 +8,8 @@ declare global {
       // once(channel: string, func: (...args: unknown[]) => void): void;
 
       // portfolios
-      createPortfolio: (portfolioName: string) => void;
-      getPortfolios: () => Promise<Portfolio[]>;
+      createPortfolio: (portfolioName: string) => Promise<string>;
+      getPortfolios: () => Promise<PortfolioData[]>;
       getPortfolio: (portfolioSlug: string) => Promise<PortfolioData>;
 
       // stocks
@@ -22,8 +22,8 @@ declare global {
       deleteStock: (portfolioSlug: string, tickerSymbol: string) => Promise<PortfolioData>;
 
       // transactions
-      updateTxn: (portfolioSlug: string, txn: Transaction) => Promise<Transaction[]>;
-      deleteTxn: (portfolioSlug: string, tickerSymbol: string, updateAsset: boolean) => Promise<Transaction[]>;
+      updateTransaction: (portfolioSlug: string, txn: Transaction) => Promise<Transaction[]>;
+      deleteTransaction: (portfolioSlug: string, tickerSymbol: string, updateAsset: boolean) => Promise<Transaction[]>;
     };
   }
 }

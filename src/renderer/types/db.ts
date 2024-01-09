@@ -28,13 +28,20 @@ export interface Asset {
 export interface Portfolio {
   slug: string;
   name: string;
-  order: number;
   assets: Asset[];
   transactionQueue: Transaction[];
 }
 
+export interface DbPortfolio extends Portfolio {
+  order: number;
+}
+
+export type Portfolios = {
+  [slug: string]: DbPortfolio;
+};
+
 export interface DBSchema {
-  portfolios: Portfolio[];
+  portfolios: Portfolios;
 }
 
 export type LowDB = Low<DBSchema>;
