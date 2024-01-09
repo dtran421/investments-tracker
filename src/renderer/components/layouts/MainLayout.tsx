@@ -1,50 +1,43 @@
 import { ReactNode, useEffect, useState } from "react";
 
-import { PortfolioData } from "../../types/frontend";
+import { Portfolio } from "../../../../types";
 
-import Sidebar from "../Global/Sidebar";
+import Sidebar from "../global/Sidebar";
 
 interface MainLayoutProps {
-  activePage: string;
-  children: ReactNode;
+    activePage: string;
+    children: ReactNode;
 }
 
 const MainLayout = ({ activePage, children }: MainLayoutProps) => {
-  // TODO: implement dark mode toggle
-  const [darkMode] = useState(true);
+    // TODO: implement dark mode toggle
+    const [darkMode] = useState(true);
 
-  const [initialized, setInitialized] = useState(false);
-  const [portfolios, setPortfolios] = useState<PortfolioData[]>([]);
+    const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+    useEffect(() => {
+        const fetchPortfolios = async () => {
+            const newPortfolios = await window.electronAPI.getPortfolios();
 
-  const fetchPortfolios = async () => {
-    const portfolios = await window.electronAPI.getPortfolios();
+            setPortfolios(newPortfolios);
+        };
 
-    setPortfolios(portfolios);
-    setInitialized(true);
-  };
+        fetchPortfolios();
+    }, []);
 
-  useEffect(() => {
-    if (initialized) {
-      return;
-    }
-
-    fetchPortfolios();
-  }, [initialized]);
-
-  return (
-    <div className={`${darkMode ? "dark" : ""}`}>
-      <div className="w-full min-h-screen flex bg-neutral-900 text-black dark:text-white font-sans">
-        {portfolios.length ? (
-          <>
-            <Sidebar {...{ activePage, portfolios }} />
-            {children}
-          </>
-        ) : (
-          children
-        )}
-      </div>
-    </div>
-  );
+    return (
+        <div className={`${darkMode ? "dark" : ""}`}>
+            <div className="w-full min-h-screen flex bg-neutral-900 text-black dark:text-white font-sans">
+                {portfolios.length ? (
+                    <>
+                        <Sidebar {...{ activePage, portfolios }} />
+                        {children}
+                    </>
+                ) : (
+                    children
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default MainLayout;
